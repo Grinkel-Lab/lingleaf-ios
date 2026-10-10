@@ -108,6 +108,19 @@ final class LibraryTests: XCTestCase {
         XCTAssertTrue(library.state.words.isEmpty)
     }
 
+    func testSavingAKnownWordPutsItBackToReview() {
+        let library = library()
+        library.saveWord("bay", learned: false)
+        library.answerReview("bay", correct: true)
+        library.saveWord("bay", learned: true)
+        now = now.addingTimeInterval(60)
+        library.saveWord("bay", learned: false)
+        let saved = library.state.word("bay")
+        XCTAssertEqual(saved?.learned, false)
+        XCTAssertEqual(saved?.box, 0)
+        XCTAssertEqual(library.dueWords().map(\.word), ["bay"])
+    }
+
     func testSaveWordReturnsThePreviousRecordAndRestoreWordPutsItBack() {
         let library = library()
         XCTAssertNil(library.saveWord("Beach", learned: false, translation: "playa", translationLanguage: "es"), "a new word")
