@@ -44,5 +44,9 @@ final class LanguagesTests: XCTestCase {
         XCTAssertEqual(TranslationLanguages.suggestions(region: nil, supported: supported), defaults)
         XCTAssertEqual(TranslationLanguages.suggestions(region: "JP", supported: ["es", "fr"]), ["es", "fr"], "only supported ones")
         XCTAssertEqual(TranslationLanguages.suggestions(region: "CN", supported: ["es", "zh-Hans"]), ["zh-Hans", "es"])
+        // Same region table as Android: Belgium → Dutch, Chad → French, Singapore → Chinese.
+        XCTAssertEqual(TranslationLanguages.suggestions(region: "BE", supported: ["nl", "es", "fr"]), ["nl", "es", "fr"])
+        XCTAssertEqual(TranslationLanguages.suggestions(region: "TD", supported: ["fr", "es", "ar"]), ["fr", "es", "ar"])
+        XCTAssertEqual(TranslationLanguages.suggestions(region: "SG", supported: ["es", "zh-Hans"]), ["zh-Hans", "es"])
     }
 }
