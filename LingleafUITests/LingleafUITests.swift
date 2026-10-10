@@ -46,6 +46,77 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["All done!"].waitForExistence(timeout: 5))
     }
 
+    /// S6 Listen. XCUITest can't hear the speaker, so in -ui-testing mode the app records
+    /// the last spoken text and shows it in a test-only element (`LastSpokenProbe`).
+    /// Each card is closed before the check, so the element is read from the main
+    /// window rather than from behind the modal sheet.
+    func testListenReadsTheWordTheSentenceAndTheParagraph() {
+        button(startingWith: "The Red Boat").tap()
+
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+        beach.tap()
+        XCTAssertTrue(app.buttons["Listen"].waitForExistence(timeout: 10))
+        app.buttons["Listen"].tap()
+        closeCard()
+        assertLastSpoken("beach", "Listen on the word card speaks the word")
+
+        app.links["sea"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Listen to the sentence"].waitForExistence(timeout: 10))
+        app.buttons["Listen to the sentence"].tap()
+        closeCard()
+        assertLastSpoken("Tom lives in a small house by the sea.", "the sentence button speaks the word's sentence")
+
+        app.buttons["Read aloud"].tap()
+        assertLastSpoken(
+            "Tom lives in a small house by the sea. He is ten years old. He has a dog. The dog is brown and white. Its name is Max.",
+            "Read aloud speaks the current paragraph"
+        )
+    }
+
+    /// S9 Discover: one tap downloads a recommended book (fake catalog and fake
+    /// Gutenberg text, see `AppModel.uiTesting`) into the library.
+    func testDownloadABookFromDiscover() {
+        app.tabBars.buttons["Discover"].tap()
+        let get = app.buttons["Get Aesop's Fables"]
+        XCTAssertTrue(get.waitForExistence(timeout: 10), "the fake catalog lists Aesop's Fables")
+        get.tap()
+
+        let alert = app.alerts.matching(NSPredicate(format: "label CONTAINS %@", "is in your library")).firstMatch
+        XCTAssertTrue(alert.waitForExistence(timeout: 10), "the download is confirmed")
+        alert.buttons["OK"].tap()
+        XCTAssertTrue(alert.waitForNonExistence(timeout: 5))
+
+        app.tabBars.buttons["Library"].tap()
+        XCTAssertTrue(button(startingWith: "Aesop's Fables").exists, "the book is in the library")
+    }
+
+    // S10 Import goes through the system file picker, which XCUITest can't drive
+    // reliably; its rules (title, Gutenberg header removal, empty files refused)
+    // are covered by the importTitle/importText tests in LingleafCore's LibraryTests.
+
+    /// S12 Offline (`-ui-testing-offline`: every request fails, translation throws):
+    /// the card says what is unavailable, and the reader and saving words still work.
+    func testOfflineCardSaysWhatIsUnavailableAndTheReaderStillWorks() {
+        app.terminate()
+        app.launchArguments = ["-ui-testing-offline", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+
+        button(startingWith: "The Red Boat").tap()
+        let word = app.links["beach"].firstMatch
+        XCTAssertTrue(word.waitForExistence(timeout: 10), "the reader opens offline")
+        word.tap()
+        XCTAssertTrue(app.staticTexts["No definition available."].waitForExistence(timeout: 10))
+        let unavailable = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Translation unavailable")).firstMatch
+        XCTAssertTrue(unavailable.waitForExistence(timeout: 10), "the card says translation is unavailable")
+
+        app.buttons["Learn"].tap()
+        XCTAssertTrue(app.buttons["Learn"].waitForNonExistence(timeout: 10), "the card closes after Learn")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["Words"].tap()
+        XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "the word is saved offline")
+    }
+
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
     /// hit areas…) on every main screen, empty and with a word being learned
     /// (marked word in the reader, a Words row, Review before and after the
@@ -105,6 +176,9 @@ final class LingleafUITests: XCTestCase {
     /// Audit findings checked by hand and found not to be real problems. Each
     /// one names the screen and the reason; anything else still fails the test.
     private static func knownFalsePositive(_ issue: XCUIAccessibilityAuditIssue, on screen: String) -> Bool {
+        // The DEBUG-only element that exposes the last spoken text to UI tests
+        // (1×1 pt, nearly transparent); users never see it and live builds don't have it.
+        if issue.element?.identifier == lastSpokenID { return true }
         switch (screen, issue.auditType) {
         case ("Settings", .contrast) where issue.element?.label.uppercased() == "VOICE":
             // The four section headers share one style and colour. Measured on the
@@ -130,6 +204,23 @@ final class LingleafUITests: XCTestCase {
         default:
             return false
         }
+    }
+
+    /// Identifier of `LastSpokenProbe` in the app.
+    private static let lastSpokenID = "ui-test-last-spoken"
+
+    /// Waits for the app's record of the last spoken text to equal `text`.
+    private func assertLastSpoken(_ text: String, _ message: String, file: StaticString = #filePath, line: UInt = #line) {
+        let probe = app.staticTexts[Self.lastSpokenID]
+        let spoken = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", text), object: probe)
+        let result = XCTWaiter().wait(for: [spoken], timeout: 5)
+        XCTAssertEqual(result, .completed, "\(message); last spoken: '\(probe.exists ? probe.label : "nothing")'", file: file, line: line)
+    }
+
+    /// Closes the word card; "Learned" saves the word and dismisses the sheet.
+    private func closeCard() {
+        app.buttons["Learned"].tap()
+        XCTAssertTrue(app.buttons["Learned"].waitForNonExistence(timeout: 10), "the card closes")
     }
 
     /// A tab bar button sits entirely inside the bar; rows scrolled under the bar only overlap it.

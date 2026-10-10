@@ -69,12 +69,8 @@ struct LibraryView: View {
                 return
             }
             let data = try Data(contentsOf: url)
-            let raw = String(decoding: data, as: UTF8.self)
-            let text = GutenbergClient.stripBoilerplate(raw)
-            guard !text.isEmpty else { throw NetworkError("empty") }
-            let title = url.deletingPathExtension().lastPathComponent
-            model.library.addBook(title: title, author: "—", text: text)
-            message = String(localized: "“\(title)” added to your library.")
+            let book = try model.library.importText(fileName: url.lastPathComponent, text: String(decoding: data, as: UTF8.self))
+            message = String(localized: "“\(book.title)” added to your library.")
         } catch {
             message = String(localized: "Couldn't import that file. Try a plain-text (.txt) English book.")
         }

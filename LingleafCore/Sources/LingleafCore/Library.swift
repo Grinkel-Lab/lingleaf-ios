@@ -87,6 +87,12 @@ public struct LibraryState: Equatable, Sendable {
     }
 }
 
+/// Why a file could not be imported.
+public enum ImportError: Error, Equatable {
+    /// The file has no text once the Gutenberg header and footer are removed.
+    case empty
+}
+
 /// Where files live. The app maps it to Application Support; tests to memory.
 public protocol Storage {
     func read(_ name: String) -> String?
@@ -156,6 +162,24 @@ public final class Library {
         state.books.append(book)
         saveBooks()
         return book
+    }
+
+    /// Title for an imported file: the file name without its last extension,
+    /// trimmed ("my.story.TXT" → "my.story"); "Book" when nothing is left.
+    public static func importTitle(fileName: String) -> String {
+        let base = fileName.lastIndex(of: ".").map { String(fileName[..<$0]) } ?? fileName
+        let title = base.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? "Book" : title
+    }
+
+    /// Adds an imported plain-text file: the Gutenberg header and footer are removed
+    /// and the author is "—". Throws, adding nothing, when no text is left.
+    /// The 10 MB size check happens before the file is read (see `Limits.maxBytes`).
+    @discardableResult
+    public func importText(fileName: String, text: String) throws -> Book {
+        let body = GutenbergClient.stripBoilerplate(text)
+        guard !body.isEmpty else { throw ImportError.empty }
+        return addBook(title: Self.importTitle(fileName: fileName), author: "—", text: body)
     }
 
     public func deleteBook(_ id: String) {

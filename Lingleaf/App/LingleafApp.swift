@@ -18,6 +18,9 @@ struct LingleafApp: App {
                 .tint(Brand.ink)
                 // Lets UI tests and the screenshot tour render dark mode on any simulator.
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("-dark-mode") ? .dark : nil)
+                #if DEBUG
+                .overlay(alignment: .topLeading) { LastSpokenProbe() }
+                #endif
         }
     }
 }
@@ -31,10 +34,16 @@ final class AppModel {
     let dictionary: DictionaryClient
     let gutenberg: GutenbergClient
     let speaker: Speaker
-    /// UI tests replace on-device translation with this function.
-    let fakeTranslator: (@Sendable (String) -> String)?
+    /// UI tests replace on-device translation with this function; it throws to simulate being offline.
+    let fakeTranslator: (@Sendable (String) throws -> String)?
+    /// UI tests only: the last text handed to the fake speaker, shown by `LastSpokenProbe`.
+    /// Always nil in live mode. (Not inside `#if`: `@Observable` must see it to track it.)
+    private(set) var lastSpoken: String?
 
-    init(library: Library, http: HttpFetcher, speaker: Speaker, fakeTranslator: (@Sendable (String) -> String)? = nil) {
+    init(
+        library: Library, http: HttpFetcher, speaker: Speaker,
+        fakeTranslator: (@Sendable (String) throws -> String)? = nil
+    ) {
         self.library = library
         self.dictionary = DictionaryClient(http: http)
         self.gutenberg = GutenbergClient(http: http)
@@ -51,7 +60,9 @@ final class AppModel {
     static func make() -> AppModel {
         #if DEBUG
         // UI tests only: release builds never take the offline, fake-data path.
-        if ProcessInfo.processInfo.arguments.contains("-ui-testing") { return uiTesting() }
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-ui-testing-offline") { return uiTesting(offline: true) }
+        if arguments.contains("-ui-testing") { return uiTesting(offline: false) }
         #endif
         return live()
     }
@@ -61,17 +72,29 @@ final class AppModel {
         return AppModel(library: Library(storage: FileStorage(directory: support)), http: URLSessionFetcher(), speaker: Speaker())
     }
 
-    /// Fresh, offline and deterministic: canned dictionary answers and translations.
-    private static func uiTesting() -> AppModel {
+    #if DEBUG
+    /// Fresh, offline and deterministic: canned dictionary answers, catalog, book text
+    /// and translations. With `offline`, every request fails and translation throws,
+    /// as on a device without internet. The speaker records instead of speaking.
+    private static func uiTesting(offline: Bool) -> AppModel {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let http = ClosureFetcher { url in
+            if offline { throw NetworkError("The Internet connection appears to be offline.") }
             if url.contains("gutendex") { return HttpResponse(status: 200, text: fakeCatalog) }
+            if url.contains("gutenberg.org/ebooks/") { return HttpResponse(status: 200, text: fakeBookText) }
             guard url.contains("dictionaryapi.dev") else { return HttpResponse(status: 404, text: "") }
             let word = url.split(separator: "/").last.map(String.init) ?? ""
             let json = #"[{"word": "\#(word)", "phonetic": "/test/", "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "Definition of \#(word)."}]}]}]"#
             return HttpResponse(status: 200, text: json)
         }
-        return AppModel(library: Library(storage: FileStorage(directory: dir)), http: http, speaker: Speaker(), fakeTranslator: { "ES: \($0)" })
+        let translator: @Sendable (String) throws -> String = offline
+            ? { _ in throw NetworkError("Translation unavailable offline") }
+            : { "ES: \($0)" }
+        let speaker = Speaker()
+        let library = Library(storage: FileStorage(directory: dir))
+        let model = AppModel(library: library, http: http, speaker: speaker, fakeTranslator: translator)
+        speaker.record = { [weak model] text in model?.lastSpoken = text }
+        return model
     }
 
     /// A small Gutendex answer so Discover has books to show in UI tests.
@@ -85,6 +108,21 @@ final class AppModel {
        "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/16.txt.utf-8"}}
     ]}
     """#
+
+    /// What the fake http answers for any book's text: a short Gutenberg-style file.
+    nonisolated private static let fakeBookText = """
+    The Project Gutenberg eBook
+    License header.
+    *** START OF THE PROJECT GUTENBERG EBOOK TEST ***
+
+    The Fox and the Grapes
+
+    A fox saw some grapes hanging high on a vine. He jumped, but he could not reach them.
+
+    *** END OF THE PROJECT GUTENBERG EBOOK TEST ***
+    License footer.
+    """
+    #endif
 
     private static func bundledStories() -> [BundledStory] {
         [
@@ -122,3 +160,22 @@ final class AppModel {
         return locale.localizedString(forIdentifier: code)?.capitalized(with: locale) ?? code
     }
 }
+
+#if DEBUG
+/// UI tests only: XCUITest can't hear the speaker, so the last spoken text is
+/// rendered here, practically invisible, for tests to read by identifier.
+/// Not hidden from accessibility, or XCUITest couldn't read it either.
+private struct LastSpokenProbe: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        if let spoken = model.lastSpoken {
+            Text(spoken)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("ui-test-last-spoken")
+        }
+    }
+}
+#endif
