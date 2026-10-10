@@ -87,9 +87,12 @@ final class AppModel {
             let json = #"[{"word": "\#(word)", "phonetic": "/test/", "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "Definition of \#(word)."}]}]}]"#
             return HttpResponse(status: 200, text: json)
         }
-        let translator: @Sendable (String) throws -> String = offline
-            ? { _ in throw NetworkError("Translation unavailable offline") }
-            : { "ES: \($0)" }
+        let translator: @Sendable (String) throws -> String
+        if offline {
+            translator = { _ in throw NetworkError("Translation unavailable offline") }
+        } else {
+            translator = { text in "ES: \(text)" }
+        }
         let speaker = Speaker()
         let library = Library(storage: FileStorage(directory: dir))
         let model = AppModel(library: library, http: http, speaker: speaker, fakeTranslator: translator)
