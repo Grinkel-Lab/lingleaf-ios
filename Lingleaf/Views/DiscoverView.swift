@@ -27,7 +27,7 @@ struct DiscoverView: View {
                                 .buttonStyle(.bordered)
                         }
                         .frame(maxWidth: .infinity)
-                    } else if let results, results.isEmpty {
+                    } else if (results ?? recommended).isEmpty {
                         Text("No books found. Try another title or author.")
                     } else {
                         ForEach(results ?? recommended) { row($0) }

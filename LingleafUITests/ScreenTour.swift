@@ -36,6 +36,7 @@ final class ScreenTour: XCTestCase {
         prefix = "\(labels.language)-\(dark ? "dark" : "light")"
         app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-AppleLanguages", "(\(labels.language))", "-AppleLocale", labels.language]
+            + (dark ? ["-dark-mode"] : [])
         app.launch()
 
         let book = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "The Red Boat")).firstMatch

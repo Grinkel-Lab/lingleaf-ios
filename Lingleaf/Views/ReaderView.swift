@@ -39,6 +39,7 @@ struct ReaderView: View {
         .accessibilityValue(Text(book?.progress ?? 0, format: .percent.precision(.fractionLength(0))))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
+        .toolbar(.hidden, for: .tabBar)
         .sheet(item: $selection) { selection in
             WordCardView(selection: selection, source: book?.title ?? "")
                 .presentationDetents([.medium, .large])

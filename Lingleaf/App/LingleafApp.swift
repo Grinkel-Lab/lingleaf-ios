@@ -10,6 +10,8 @@ struct LingleafApp: App {
             ContentView()
                 .environment(model)
                 .tint(Brand.ink)
+                // Lets UI tests and the screenshot tour render dark mode on any simulator.
+                .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("-dark-mode") ? .dark : nil)
         }
     }
 }
@@ -53,13 +55,26 @@ final class AppModel {
     private static func uiTesting() -> AppModel {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let http = ClosureFetcher { url in
-            guard url.contains("dictionaryapi.dev") else { return HttpResponse(status: 200, text: #"{"results": []}"#) }
+            if url.contains("gutendex") { return HttpResponse(status: 200, text: fakeCatalog) }
+            guard url.contains("dictionaryapi.dev") else { return HttpResponse(status: 404, text: "") }
             let word = url.split(separator: "/").last.map(String.init) ?? ""
             let json = #"[{"word": "\#(word)", "phonetic": "/test/", "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "Definition of \#(word)."}]}]}]"#
             return HttpResponse(status: 200, text: json)
         }
         return AppModel(library: Library(storage: FileStorage(directory: dir)), http: http, speaker: Speaker(), fakeTranslator: { "ES: \($0)" })
     }
+
+    /// A small Gutendex answer so Discover has books to show in UI tests.
+    private static let fakeCatalog = #"""
+    {"results": [
+      {"id": 21, "title": "Aesop's Fables", "authors": [{"name": "Aesop"}],
+       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/21.txt.utf-8"}},
+      {"id": 55, "title": "The Wonderful Wizard of Oz", "authors": [{"name": "Baum, L. Frank"}],
+       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/55.txt.utf-8"}},
+      {"id": 16, "title": "Peter Pan", "authors": [{"name": "Barrie, J. M."}],
+       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/16.txt.utf-8"}}
+    ]}
+    """#
 
     private static func bundledStories() -> [BundledStory] {
         [
