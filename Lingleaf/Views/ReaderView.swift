@@ -191,7 +191,10 @@ struct ReaderView: View {
     /// The default toolbar grey measured 2.75:1 and toolbar tint was lost after the word
     /// sheet closed, so these items use the plain style and colour the glyph themselves.
     private func inkIcon(_ name: String) -> some View {
-        Image(systemName: name).foregroundStyle(Brand.ink)
+        Image(systemName: name)
+            .foregroundStyle(Brand.ink)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
     }
 
     private func handle(_ url: URL) {
