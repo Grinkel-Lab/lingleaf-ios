@@ -203,6 +203,17 @@
         }
       }
     },
+    "Close": {
+      "comment": "Closes the Undo message when it doesn't time out (VoiceOver or Switch Control on).",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        }
+      }
+    },
     "Continue reading": {
       "localizations": {
         "es": {

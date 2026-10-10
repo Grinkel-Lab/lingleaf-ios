@@ -3,8 +3,8 @@ import SwiftUI
 
 /// A short message at the bottom of the screen with an Undo button, e.g.
 /// "“beach” saved to Words". It is announced to VoiceOver and disappears after
-/// `seconds`; with VoiceOver or Switch Control on it stays until Undo is tapped or
-/// a newer message replaces it.
+/// `seconds`; with VoiceOver or Switch Control on it stays until Undo or Close is
+/// tapped or a newer message replaces it.
 struct UndoMessage: Identifiable, Equatable {
     let id = UUID()
     let text: String
@@ -35,8 +35,10 @@ private struct UndoMessageModifier: ViewModifier {
         content
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if let current = message {
-                    UndoBanner(message: current) {
+                    UndoBanner(message: current, showsClose: staysOpen) {
                         current.undo()
+                        message = nil
+                    } onClose: {
                         message = nil
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -69,7 +71,10 @@ private struct Timeout: Equatable {
 /// highest contrast in light and dark mode.
 private struct UndoBanner: View {
     let message: UndoMessage
+    /// When the message doesn't time out, a close button lets the learner dismiss it.
+    let showsClose: Bool
     let onUndo: () -> Void
+    let onClose: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -85,6 +90,16 @@ private struct UndoBanner: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            if showsClose {
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Close"))
+            }
         }
         .foregroundStyle(Color(uiColor: .systemBackground))
         .padding(.leading, 16)
