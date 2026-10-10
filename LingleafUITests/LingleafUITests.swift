@@ -106,6 +106,12 @@ final class LingleafUITests: XCTestCase {
     /// one names the screen and the reason; anything else still fails the test.
     private static func knownFalsePositive(_ issue: XCUIAccessibilityAuditIssue, on screen: String) -> Bool {
         switch (screen, issue.auditType) {
+        case ("Settings", .contrast) where issue.element?.label.uppercased() == "VOICE":
+            // The four section headers share one style and colour. Measured on the
+            // screenshot tour all four are 7.58:1 (#4D4D4D on #F2F2F7), yet only
+            // "Voice" is reported, run after run; the others pass. Only this header
+            // is exempt, so a real regression in the shared style still fails.
+            return true
         case ("Settings", .contrast):
             // On iOS 26 the audit reports contrast failures inside Form controls
             // without naming any element. Measured on the screenshot tour, every
