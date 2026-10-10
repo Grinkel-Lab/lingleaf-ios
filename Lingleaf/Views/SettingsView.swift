@@ -46,12 +46,18 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Picker("Translate to", selection: Binding(
+                    Picker("Translate into", selection: Binding<String?>(
                         get: { model.targetLanguage },
-                        set: { code in model.library.updateSettings { $0.targetLanguage = code } }
+                        set: { code in
+                            if let code { model.setTargetLanguage(code) }
+                        }
                     )) {
+                        // Until a language is chosen (or picked from the device), the word card asks.
+                        if model.targetLanguage == nil {
+                            Text("Ask me when I tap a word").tag(String?.none)
+                        }
                         ForEach(AppModel.translationLanguages, id: \.self) { code in
-                            Text(AppModel.languageName(code)).tag(code)
+                            Text(AppModel.languageLabel(code)).tag(String?.some(code))
                         }
                     }
                     // A row rather than a section footer: footers use a fixed style

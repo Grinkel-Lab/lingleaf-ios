@@ -146,7 +146,7 @@ struct WordCardView: View {
         } else {
             configuration = TranslationSession.Configuration(
                 source: Locale.Language(identifier: "en"),
-                target: Locale.Language(identifier: model.targetLanguage)
+                target: model.targetLanguage.map { Locale.Language(identifier: $0) }
             )
         }
     }

@@ -67,6 +67,10 @@ struct ContentView: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        // Inside `.environment(model)` (applied by LingleafApp), which the worker reads.
+        .modifier(TranslationWorker())
+        // Words saved offline or before a language was chosen get their translation.
+        .task { model.translateMissing() }
     }
 }
 

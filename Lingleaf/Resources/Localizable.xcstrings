@@ -173,6 +173,16 @@
         }
       }
     },
+    "Ask me when I tap a word": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preguntar al tocar una palabra"
+          }
+        }
+      }
+    },
     "Books: Project Gutenberg (public domain). Definitions: dictionaryapi.dev. No accounts, no ads, no tracking.": {
       "localizations": {
         "es": {
@@ -523,12 +533,12 @@
         }
       }
     },
-    "No saved translation": {
+    "No translation yet. Connect to the internet once to get it.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sin traducción guardada"
+            "value": "Aún sin traducción. Conéctate a internet una vez para obtenerla."
           }
         }
       }
@@ -813,12 +823,12 @@
         }
       }
     },
-    "Translate to": {
+    "Translate into": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traducir al"
+            "value": "Traducir a"
           }
         }
       }

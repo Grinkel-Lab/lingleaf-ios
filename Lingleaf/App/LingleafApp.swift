@@ -1,4 +1,5 @@
 import SwiftUI
+import Translation
 import LingleafCore
 
 @main
@@ -37,12 +38,16 @@ final class AppModel {
     let speaker: Speaker
     /// UI tests replace on-device translation with this function; it throws to simulate being offline.
     let fakeTranslator: (@Sendable (String) throws -> String)?
+    /// The language picked from the device's preferred languages; nil when none is supported (then the app asks).
+    let autoLanguage: String?
+    /// Drives `TranslationWorker`: each new or invalidated value translates the saved words that need it.
+    private(set) var workerConfiguration: TranslationSession.Configuration?
     /// UI tests only: the last text handed to the fake speaker, shown by `LastSpokenProbe`.
     /// Always nil in live mode. (Not inside `#if`: `@Observable` must see it to track it.)
     private(set) var lastSpoken: String?
 
     init(
-        library: Library, http: HttpFetcher, speaker: Speaker,
+        library: Library, http: HttpFetcher, speaker: Speaker, autoLanguage: String?,
         fakeTranslator: (@Sendable (String) throws -> String)? = nil
     ) {
         self.library = library
@@ -50,6 +55,7 @@ final class AppModel {
         self.gutenberg = GutenbergClient(http: http)
         self.speaker = speaker
         self.fakeTranslator = fakeTranslator
+        self.autoLanguage = autoLanguage
         library.load()
         library.seedIfNeeded(Self.bundledStories)
         self.state = library.state
@@ -62,22 +68,31 @@ final class AppModel {
         #if DEBUG
         // UI tests only: release builds never take the offline, fake-data path.
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("-ui-testing-offline") { return uiTesting(offline: true) }
-        if arguments.contains("-ui-testing") { return uiTesting(offline: false) }
+        // With -ui-testing-no-language no translation language is saved, so the word card asks.
+        let language = arguments.contains("-ui-testing-no-language") ? nil : "es"
+        if arguments.contains("-ui-testing-offline") { return uiTesting(offline: true, language: language) }
+        if arguments.contains("-ui-testing") { return uiTesting(offline: false, language: language) }
         #endif
         return live()
     }
 
     private static func live() -> AppModel {
         let support = URL.applicationSupportDirectory.appending(path: "Lingleaf", directoryHint: .isDirectory)
-        return AppModel(library: Library(storage: FileStorage(directory: support)), http: URLSessionFetcher(), speaker: Speaker())
+        // The preferred-language list, not `Locale.current`: that is the app's own UI
+        // language, English for a Brazilian since the app only speaks English and Spanish.
+        let language = TranslationLanguages.pick(preferred: Locale.preferredLanguages, supported: TranslationLanguages.supported)
+        return AppModel(
+            library: Library(storage: FileStorage(directory: support)), http: URLSessionFetcher(), speaker: Speaker(),
+            autoLanguage: language
+        )
     }
 
     #if DEBUG
     /// Fresh, offline and deterministic: canned dictionary answers, catalog, book text
     /// and translations. With `offline`, every request fails and translation throws,
     /// as on a device without internet. The speaker records instead of speaking.
-    private static func uiTesting(offline: Bool) -> AppModel {
+    /// `language` is saved as the translation language; nothing is picked from the device.
+    private static func uiTesting(offline: Bool, language: String?) -> AppModel {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let http = ClosureFetcher { url in
             if offline { throw NetworkError("The Internet connection appears to be offline.") }
@@ -96,8 +111,9 @@ final class AppModel {
         }
         let speaker = Speaker()
         let library = Library(storage: FileStorage(directory: dir))
-        let model = AppModel(library: library, http: http, speaker: speaker, fakeTranslator: translator)
+        let model = AppModel(library: library, http: http, speaker: speaker, autoLanguage: nil, fakeTranslator: translator)
         speaker.record = { [weak model] text in model?.lastSpoken = text }
+        if let language { library.updateSettings { $0.targetLanguage = language } }
         return model
     }
 
@@ -145,23 +161,84 @@ final class AppModel {
         return !learning.isEmpty && !TextTools.matchKeys(token).isDisjoint(with: learning)
     }
 
-    var targetLanguage: String { state.settings.targetLanguage ?? Self.defaultTargetLanguage }
+    /// The saved choice, else the one picked from the device; nil means ask on the word card.
+    var targetLanguage: String? { state.settings.targetLanguage ?? autoLanguage }
 
-    /// Languages Apple Translation can translate English into.
-    static let translationLanguages = [
-        "es", "pt", "fr", "it", "de", "nl", "pl", "uk", "ru", "tr", "ar", "hi", "id", "vi", "th", "zh-Hans", "ja", "ko",
-    ]
-
-    /// The device language when supported and not English; Spanish otherwise.
-    static var defaultTargetLanguage: String {
-        let code = Locale.current.language.languageCode?.identifier ?? "es"
-        if code == "zh" { return "zh-Hans" }
-        return translationLanguages.contains(code) ? code : "es"
+    /// Saves the translation language and translates the saved words into it.
+    func setTargetLanguage(_ code: String) {
+        library.updateSettings { $0.targetLanguage = code }
+        translateMissing()
     }
 
+    /// Languages Apple Translation can translate English into.
+    static let translationLanguages = TranslationLanguages.supported
+
+    /// The language's name in that language: "Español", "Português", "中文".
     static func languageName(_ code: String) -> String {
         let locale = Locale(identifier: code)
-        return locale.localizedString(forIdentifier: code)?.capitalized(with: locale) ?? code
+        let language = locale.language.languageCode?.identifier ?? code
+        return locale.localizedString(forLanguageCode: language)?.capitalized(with: locale) ?? code
+    }
+
+    /// `languageName`, marked as being in that language so VoiceOver reads it with the right voice.
+    static func languageLabel(_ code: String) -> AttributedString {
+        var label = AttributedString(languageName(code))
+        label.languageIdentifier = code
+        return label
+    }
+
+    // MARK: Translations that arrive after saving
+
+    /// Translates, on the device, saved words with no translation or one in another
+    /// language (just saved, saved offline, or the language changed). UI tests use
+    /// the fake translator; otherwise `TranslationWorker` runs `translatePending`.
+    func translateMissing() {
+        guard let target = targetLanguage, !library.wordsNeedingTranslation(target).isEmpty else { return }
+        if let fakeTranslator {
+            for word in library.wordsNeedingTranslation(target) {
+                guard let text = try? fakeTranslator(word.word) else { return }
+                library.setTranslation(word.word, text, language: target)
+            }
+            return
+        }
+        let language = Locale.Language(identifier: target)
+        if workerConfiguration?.target == language {
+            workerConfiguration?.invalidate()
+        } else {
+            workerConfiguration = TranslationSession.Configuration(source: Locale.Language(identifier: "en"), target: language)
+        }
+    }
+
+    /// Called by `TranslationWorker` with a session for `workerConfiguration`.
+    /// Failures leave the words as they are; they are tried again the next time.
+    func translatePending(using session: TranslationSession) async {
+        guard let target = targetLanguage else { return }
+        let language = Locale.Language(identifier: target)
+        let words = library.wordsNeedingTranslation(target)
+        guard workerConfiguration?.target == language, !words.isEmpty else { return }
+        // Only with the language already on the device: in the background the app
+        // doesn't ask to download it (the word card does).
+        let status = await LanguageAvailability().status(from: Locale.Language(identifier: "en"), to: language)
+        guard status == .installed else { return }
+        let requests = words.map { TranslationSession.Request(sourceText: $0.word, clientIdentifier: $0.word) }
+        guard let responses = try? await session.translations(from: requests) else { return }
+        for response in responses {
+            guard let word = response.clientIdentifier else { continue }
+            library.setTranslation(word, response.targetText, language: target)
+        }
+    }
+}
+
+/// Gives `AppModel` a translation session whenever `workerConfiguration` changes, so saved
+/// words get their missing translations on the device: iOS 18 only hands out a
+/// `TranslationSession` to a view's `.translationTask`. Applied once, at the root.
+struct TranslationWorker: ViewModifier {
+    @Environment(AppModel.self) private var model
+
+    func body(content: Content) -> some View {
+        content.translationTask(model.workerConfiguration) { session in
+            await model.translatePending(using: session)
+        }
     }
 }
 

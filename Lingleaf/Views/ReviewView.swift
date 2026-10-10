@@ -19,7 +19,8 @@ struct ReviewView: View {
                     .accessibilityLabel(Text("Review progress"))
                     .accessibilityValue(Text("\(reviewed) of \(total)"))
                 Spacer()
-                card(word)
+                // The saved record, not the queued copy: a translation may arrive while reviewing.
+                card(model.state.word(word.word) ?? word)
                 Spacer()
                 HStack(spacing: 12) {
                     Button { answer(correct: false) } label: {
@@ -48,6 +49,7 @@ struct ReviewView: View {
         .navigationTitle("Review")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            model.translateMissing()
             guard !loaded else { return }
             queue = model.library.dueWords()
             total = queue.count
@@ -75,7 +77,11 @@ struct ReviewView: View {
                 VStack(spacing: 4) {
                     if !word.phonetic.isEmpty { Text(word.phonetic).foregroundStyle(Brand.secondaryText) }
                     if word.translation.isEmpty {
-                        Text("No saved translation").font(.title2)
+                        Text("No translation yet. Connect to the internet once to get it.")
+                            .font(.callout)
+                            .foregroundStyle(Brand.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Text(word.translation).font(.title2)
                     }
@@ -109,7 +115,8 @@ struct ReviewView: View {
     /// The button VoiceOver was on disappears; say what appeared in its place.
     private func announceMeaning(of word: VocabWord) {
         var announcement = AttributedString(
-            word.translation.isEmpty ? String(localized: "No saved translation") : word.translation
+            word.translation.isEmpty
+                ? String(localized: "No translation yet. Connect to the internet once to get it.") : word.translation
         )
         // High priority: not cut off by VoiceOver moving focus away from the vanished button.
         announcement.accessibilitySpeechAnnouncementPriority = .high
