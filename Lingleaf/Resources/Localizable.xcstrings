@@ -1034,7 +1034,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "«%@» eliminada"
+            "value": "“%@” eliminada"
           }
         }
       }
@@ -1054,7 +1054,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "«%@» marcada como conocida"
+            "value": "“%@” marcada como conocida"
           }
         }
       }
@@ -1064,7 +1064,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "«%@» quitada de Palabras"
+            "value": "Se quitó “%@” de Palabras"
           }
         }
       }
@@ -1074,7 +1074,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "«%@» guardada en Palabras"
+            "value": "“%@” guardada en Palabras"
           }
         }
       }
