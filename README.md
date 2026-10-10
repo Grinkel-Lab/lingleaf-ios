@@ -58,10 +58,15 @@ Apple Translation doesn't run in the Simulator; try translations on a real devic
 
 ## Privacy
 
-Data stays on your device. Network requests go only to `gutendex.com` / `gutenberg.org`
-(books) and `api.dictionaryapi.dev` (definitions), always over HTTPS. Translation runs
-on the device with Apple Translation. The app ships a privacy manifest declaring no tracking
-and no data collection.
+Lingleaf has no accounts, ads or analytics, and keeps your books and words on your
+device (and in your iCloud/device backup, if you use one). The app itself talks only to
+`gutendex.com` / `gutenberg.org` (books) and `api.dictionaryapi.dev` (definitions),
+always over HTTPS.
+
+Translation runs on the device with Apple Translation; iOS downloads each language
+from Apple the first time (it asks you first). The words you look up are translated
+on the device and are not sent. The app ships a privacy manifest declaring no
+tracking and no data collection.
 
 ## License
 
