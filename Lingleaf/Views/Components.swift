@@ -173,7 +173,7 @@ struct FlowLayout: Layout {
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? .infinity
-        let rows = rows(of: subviews, width: width)
+        let rows = layoutRows(of: subviews, width: width)
         let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(rows.count - 1, 0))
         let widest = rows.map(\.width).max() ?? 0
         return CGSize(width: proposal.width ?? widest, height: height)
@@ -181,7 +181,7 @@ struct FlowLayout: Layout {
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var y = bounds.minY
-        for row in rows(of: subviews, width: bounds.width) {
+        for row in layoutRows(of: subviews, width: bounds.width) {
             var x = bounds.minX + max(0, (bounds.width - row.width) / 2)
             for (index, size) in zip(row.indices, row.sizes) {
                 subviews[index].place(
@@ -201,7 +201,7 @@ struct FlowLayout: Layout {
         var height: CGFloat = 0
     }
 
-    private func rows(of subviews: Subviews, width: CGFloat) -> [Row] {
+    private func layoutRows(of subviews: Subviews, width: CGFloat) -> [Row] {
         // A child wider than the row (very large text) is offered the row's width and wraps.
         let childProposal = ProposedViewSize(width: width.isFinite ? width : nil, height: nil)
         var rows: [Row] = []

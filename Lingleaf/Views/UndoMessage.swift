@@ -8,7 +8,7 @@ struct UndoMessage: Identifiable, Equatable {
     let id = UUID()
     let text: String
     let seconds: Double
-    let undo: @MainActor () -> Void
+    let undo: () -> Void
 
     static func == (lhs: UndoMessage, rhs: UndoMessage) -> Bool { lhs.id == rhs.id }
 }
