@@ -8,13 +8,18 @@ import XCTest
 final class ScreenTour: XCTestCase {
     private struct Labels {
         let language: String
-        let learn: String
+        let saveWord: String
+        let undo: String
         let reviewNow: String
         let showMeaning: String
     }
 
-    private static let english = Labels(language: "en", learn: "Learn", reviewNow: "Review now", showMeaning: "Show meaning")
-    private static let spanish = Labels(language: "es", learn: "Aprender", reviewNow: "Repasar ahora", showMeaning: "Mostrar significado")
+    private static let english = Labels(
+        language: "en", saveWord: "Save word", undo: "Undo", reviewNow: "Review now", showMeaning: "Show meaning"
+    )
+    private static let spanish = Labels(
+        language: "es", saveWord: "Guardar palabra", undo: "Deshacer", reviewNow: "Repasar ahora", showMeaning: "Mostrar significado"
+    )
 
     private var app: XCUIApplication!
     private var prefix = ""
@@ -49,28 +54,34 @@ final class ScreenTour: XCTestCase {
         snap("02-reader")
 
         word.tap()
-        _ = app.buttons[labels.learn].waitForExistence(timeout: 10)
+        _ = app.buttons[labels.saveWord].waitForExistence(timeout: 10)
         snap("03-word-card")
-        app.buttons[labels.learn].tap()
+        app.buttons[labels.saveWord].tap()
+        // The reader confirms the save with an Undo message for a few seconds.
+        let undo = app.buttons[labels.undo]
+        if undo.waitForExistence(timeout: 5) {
+            snap("04-undo-message")
+            _ = undo.waitForNonExistence(timeout: 15)
+        }
         _ = word.waitForExistence(timeout: 5)
-        snap("04-reader-with-marked-word")
+        snap("05-reader-with-marked-word")
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
         tab(2)
-        snap("05-words")
+        snap("06-words")
         let review = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", labels.reviewNow)).firstMatch
         if review.waitForExistence(timeout: 5) {
             review.tap()
-            snap("06-review")
+            snap("07-review")
             app.buttons[labels.showMeaning].tap()
-            snap("07-review-meaning")
+            snap("08-review-meaning")
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
 
         tab(1)
-        snap("08-discover")
+        snap("09-discover")
         tab(3)
-        snap("09-settings")
+        snap("10-settings")
         app.terminate()
     }
 
