@@ -383,22 +383,22 @@
         }
       }
     },
+    "Known": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conocidas"
+          }
+        }
+      }
+    },
     "Larger text": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Letra más grande"
-          }
-        }
-      }
-    },
-    "Learned": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aprendido"
           }
         }
       }
@@ -473,12 +473,12 @@
         }
       }
     },
-    "Mark as learned": {
+    "Mark as known": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Marcar como aprendida"
+            "value": "Marcar como conocida"
           }
         }
       }
@@ -513,12 +513,12 @@
         }
       }
     },
-    "No learned words yet.": {
+    "No known words yet.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aún no tienes palabras aprendidas."
+            "value": "Aún no tienes palabras conocidas."
           }
         }
       }
@@ -533,12 +533,12 @@
         }
       }
     },
-    "No words yet. While reading, tap a word and choose Learn.": {
+    "No words yet. While reading, tap a word and choose Save word.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aún no tienes palabras. Mientras lees, toca una palabra y elige Aprender."
+            "value": "Aún no hay palabras. Mientras lees, toca una palabra y elige Guardar palabra."
           }
         }
       }
@@ -995,6 +995,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@” se agregó a tu biblioteca."
+          }
+        }
+      }
+    },
+    "“%@” deleted": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» eliminada"
           }
         }
       }

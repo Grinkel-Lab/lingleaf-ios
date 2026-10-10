@@ -4,6 +4,8 @@ import LingleafCore
 struct WordsView: View {
     @Environment(AppModel.self) private var model
     @State private var showLearned = false
+    /// "“beach” deleted" with Undo, after deleting a word.
+    @State private var undo: UndoMessage?
 
     var body: some View {
         let due = model.library.dueWords().count
@@ -26,22 +28,40 @@ struct WordsView: View {
 
                 Picker("Filter", selection: $showLearned) {
                     Text("Learning").tag(false)
-                    Text("Learned").tag(true)
+                    Text("Known").tag(true)
                 }
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)
 
                 if words.isEmpty {
-                    Text(showLearned ? "No learned words yet." : "No words yet. While reading, tap a word and choose Learn.")
-                        .foregroundStyle(Brand.secondaryText)
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
+                    Group {
+                        if showLearned {
+                            Text("No known words yet.")
+                        } else {
+                            Text("No words yet. While reading, tap a word and choose Save word.")
+                        }
+                    }
+                    .foregroundStyle(Brand.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
                 }
                 ForEach(words) { word in
-                    WordRow(word: word)
+                    WordRow(word: word) { delete(word) }
                 }
             }
             .navigationTitle("Words")
+            .undoMessage($undo)
+        }
+        // Words saved offline, or in another language, get their translation on the device.
+        .onAppear { model.translateMissing() }
+    }
+
+    /// Deletes at once (no confirmation) and offers Undo for 5 s, which puts the word back as it was.
+    private func delete(_ word: VocabWord) {
+        let library = model.library
+        library.deleteWord(word.word)
+        undo = UndoMessage(text: String(localized: "“\(word.word)” deleted"), seconds: 5) {
+            library.restoreWord(word.word, previous: word)
         }
     }
 
@@ -70,6 +90,7 @@ struct WordsView: View {
 
 private struct WordRow: View {
     let word: VocabWord
+    let onDelete: () -> Void
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -101,17 +122,27 @@ private struct WordRow: View {
             .buttonStyle(.borderless)
         }
         .swipeActions(edge: .leading) {
-            Button(word.learned ? "Review again" : "Mark as learned") {
+            Button {
                 model.library.setLearned(word.word, !word.learned)
+            } label: {
+                stateActionTitle
             }
             .tint(word.learned ? .orange : Brand.learned)
         }
         .swipeActions(edge: .trailing) {
-            Button("Delete word", role: .destructive) { model.library.deleteWord(word.word) }
+            Button("Delete word", role: .destructive, action: onDelete)
         }
-        .accessibilityAction(named: Text(word.learned ? "Review again" : "Mark as learned")) {
+        .accessibilityAction(named: stateActionTitle) {
             model.library.setLearned(word.word, !word.learned)
         }
-        .accessibilityAction(named: Text("Delete word")) { model.library.deleteWord(word.word) }
+        .accessibilityAction(named: Text("Delete word"), onDelete)
+    }
+
+    /// Known words go back to review; the others are marked as known.
+    private var stateActionTitle: Text {
+        if word.learned {
+            return Text("Review again")
+        }
+        return Text("Mark as known")
     }
 }
