@@ -83,9 +83,13 @@ private struct WordRow: View {
                 }
                 if !word.translation.isEmpty { Text(word.translation) }
                 if !word.context.isEmpty {
-                    Text(word.context).font(.caption).italic().foregroundStyle(Brand.secondaryText).lineLimit(2)
+                    Text(word.context).font(.caption).italic().foregroundStyle(Brand.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            // One VoiceOver element per word ("beach, /biːtʃ/, playa, …") instead of
+            // several small text fragments; Listen stays a separate button.
+            .accessibilityElement(children: .combine)
             Spacer()
             Button {
                 model.speaker.speak(word.word, rate: model.state.settings.speechRate)

@@ -65,6 +65,7 @@ struct ReviewView: View {
             }
             if !word.context.isEmpty {
                 Text(word.context).italic().multilineTextAlignment(.center).foregroundStyle(Brand.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if revealed {
                 VStack(spacing: 4) {
@@ -76,9 +77,17 @@ struct ReviewView: View {
                     }
                 }
             } else {
-                Button("Show meaning") {
+                Button {
                     withAnimation { revealed = true }
                     announceMeaning(of: word)
+                } label: {
+                    // Headline weight keeps the tinted label readable (large-text contrast)
+                    // and it wraps instead of clipping at large text sizes.
+                    Text("Show meaning")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(minHeight: 44)
                 }
                 .buttonStyle(.bordered)
             }

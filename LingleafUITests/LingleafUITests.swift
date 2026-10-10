@@ -25,8 +25,8 @@ final class LingleafUITests: XCTestCase {
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.tabBars.buttons["Words"].tap()
-        XCTAssertTrue(app.staticTexts["beach"].waitForExistence(timeout: 5), "the word was saved")
-        XCTAssertTrue(app.staticTexts["ES: beach"].exists)
+        XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "the word was saved")
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "ES: beach")).firstMatch.exists)
     }
 
     func testReviewAWord() {
@@ -91,7 +91,7 @@ final class LingleafUITests: XCTestCase {
         try audit("Reader with a learning word")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.tabBars.buttons["Words"].tap()
-        XCTAssertTrue(app.staticTexts["beach"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5))
         try audit("Words with a word")
         button(startingWith: "Review now").tap()
         XCTAssertTrue(app.buttons["Show meaning"].waitForExistence(timeout: 5))
@@ -113,6 +113,10 @@ final class LingleafUITests: XCTestCase {
             // accent 6.2, stepper 18.1), above WCAG AA's 4.5:1. A failure that
             // names an element is still reported.
             return issue.element == nil
+        case (_, .hitRegion):
+            // Progress bars (reader, review) are read-only indicators, not touch
+            // targets, so the minimum hit area does not apply (WCAG 2.5.8 covers targets).
+            return issue.element?.elementType == .progressIndicator
         case ("Word card", .elementDetection):
             // The card is a sheet over the reader: the book's text shows behind
             // it, dimmed and correctly hidden from VoiceOver while the card is open.
@@ -125,6 +129,11 @@ final class LingleafUITests: XCTestCase {
     /// A tab bar button sits entirely inside the bar; rows scrolled under the bar only overlap it.
     private static func isTabBarButton(_ element: XCUIElement, in tabBar: CGRect) -> Bool {
         element.elementType == .button && tabBar.contains(element.frame)
+    }
+
+    /// A word row in Words reads as one element whose label starts with the word.
+    private func element(labelled prefix: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
     }
 
     /// Rows combine their texts into one label ("The Red Boat, Level A1, …").
