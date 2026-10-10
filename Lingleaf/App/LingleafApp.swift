@@ -5,6 +5,12 @@ import LingleafCore
 struct LingleafApp: App {
     @State private var model = AppModel.make()
 
+    init() {
+        // Unselected tabs use the system grey, measured at 2.77:1 on the light tab bar;
+        // the brand secondary text colour passes WCAG AA (6:1 light, 9:1 dark).
+        UITabBar.appearance().unselectedItemTintColor = Brand.secondaryUIColor
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

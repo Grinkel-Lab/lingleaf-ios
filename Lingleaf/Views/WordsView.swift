@@ -94,7 +94,7 @@ private struct WordRow: View {
             Button {
                 model.speaker.speak(word.word, rate: model.state.settings.speechRate)
             } label: {
-                Label("Listen", systemImage: "speaker.wave.2").labelStyle(.iconOnly)
+                Label { Text("Listen to \(word.word)") } icon: { Image(systemName: "speaker.wave.2") }.labelStyle(.iconOnly)
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }

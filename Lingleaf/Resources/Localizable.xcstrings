@@ -67,6 +67,16 @@
         }
       }
     },
+    "%lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld de %lld"
+          }
+        }
+      }
+    },
     "%lld of %lld min today": {
       "localizations": {
         "es": {
@@ -453,6 +463,16 @@
         }
       }
     },
+    "Listen to %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchar %@"
+          }
+        }
+      }
+    },
     "Listen to the sentence": {
       "localizations": {
         "es": {
@@ -649,6 +669,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Repasar ahora"
+          }
+        }
+      }
+    },
+    "Review progress": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progreso del repaso"
           }
         }
       }

@@ -165,15 +165,11 @@ struct ReaderView: View {
                 }
             } label: {
                 if model.speaker.isSpeaking {
-                    Label("Stop reading", systemImage: "stop.circle")
+                    Label { Text("Stop reading") } icon: { inkIcon("stop.circle") }
                 } else {
-                    Label("Read aloud", systemImage: "speaker.wave.2")
+                    Label { Text("Read aloud") } icon: { inkIcon("speaker.wave.2") }
                 }
             }
-            // The default toolbar grey measured 2.75:1; the brand ink passes WCAG AA.
-            // Both modifiers: tint colours the glyph on iOS 18, foregroundStyle on later toolbars.
-            .tint(Brand.ink)
-            .foregroundStyle(Brand.ink)
             Menu {
                 Button("Larger text", systemImage: "plus.magnifyingglass") {
                     model.library.updateSettings { $0.fontSize = min($0.fontSize + 2, 34) }
@@ -182,11 +178,15 @@ struct ReaderView: View {
                     model.library.updateSettings { $0.fontSize = max($0.fontSize - 2, 14) }
                 }
             } label: {
-                Label("Text size", systemImage: "textformat.size")
+                Label { Text("Text size") } icon: { inkIcon("textformat.size") }
             }
-            .tint(Brand.ink)
-            .foregroundStyle(Brand.ink)
         }
+    }
+
+    /// The default toolbar grey measured 2.75:1. Toolbar tint was lost after the word
+    /// sheet closed, so the glyph itself carries the brand ink (palette rendering).
+    private func inkIcon(_ name: String) -> some View {
+        Image(systemName: name).symbolRenderingMode(.palette).foregroundStyle(Brand.ink)
     }
 
     private func handle(_ url: URL) {

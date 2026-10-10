@@ -13,10 +13,15 @@ enum Brand {
     /// Streak text: #A0430A on light backgrounds, #FF8A50 on dark ones (both ≥4.5:1).
     static let streak = dynamic(light: rgb(0xA0430A), dark: rgb(0xFF8A50))
     /// Secondary text darker than the system's, so it passes WCAG AA (≥4.5:1) on list backgrounds.
-    static let secondaryText = dynamic(light: UIColor(white: 0.36, alpha: 1), dark: UIColor(white: 0.74, alpha: 1))
+    static let secondaryText = Color(uiColor: secondaryUIColor)
+    static let secondaryUIColor = dynamicUIColor(light: UIColor(white: 0.36, alpha: 1), dark: UIColor(white: 0.74, alpha: 1))
 
     private static func dynamic(light: UIColor, dark: UIColor) -> Color {
-        Color(uiColor: UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light })
+        Color(uiColor: dynamicUIColor(light: light, dark: dark))
+    }
+
+    private static func dynamicUIColor(light: UIColor, dark: UIColor) -> UIColor {
+        UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light }
     }
 
     private static func rgb(_ hex: UInt32) -> UIColor {

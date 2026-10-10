@@ -16,6 +16,8 @@ struct ReviewView: View {
         VStack(spacing: 24) {
             if let word = queue.first {
                 ProgressView(value: Double(reviewed), total: Double(max(total, 1)))
+                    .accessibilityLabel(Text("Review progress"))
+                    .accessibilityValue(Text("\(reviewed) of \(total)"))
                 Spacer()
                 card(word)
                 Spacer()
