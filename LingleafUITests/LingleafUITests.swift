@@ -47,8 +47,9 @@ final class LingleafUITests: XCTestCase {
     }
 
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
-    /// hit areas…) on every main screen. Collects every issue before failing,
-    /// so one CI run shows the whole list.
+    /// hit areas…) on every main screen, empty and with a word being learned
+    /// (marked word in the reader, a Words row, Review before and after the
+    /// meaning). Collects every issue before failing, so one CI run shows the whole list.
     func testAccessibilityAudit() throws {
         var issues: [String] = []
         func audit(_ screen: String) throws {
@@ -59,8 +60,10 @@ final class LingleafUITests: XCTestCase {
             let tabBar = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.frame : .null
             try app.performAccessibilityAudit { issue in
                 // Rows scrolled under the translucent tab bar are measured against
-                // the bar's blur; scrolled into view they read normally.
-                if issue.auditType == .contrast, let frame = issue.element?.frame, frame.intersects(tabBar) { return true }
+                // the bar's blur; scrolled into view they read normally. The tab
+                // bar's own buttons are not exempt: their contrast is still checked.
+                if issue.auditType == .contrast, let flagged = issue.element, flagged.frame.intersects(tabBar),
+                   !Self.isTabBarButton(flagged, in: tabBar) { return true }
                 // The search field is UIKit's own (from `.searchable`); its clipping
                 // at large text sizes is iOS's to handle, not something the app can change.
                 if issue.auditType == .textClipped, issue.element?.elementType == .searchField { return true }
@@ -81,6 +84,21 @@ final class LingleafUITests: XCTestCase {
         app.links["beach"].firstMatch.tap()
         XCTAssertTrue(app.buttons["Learn"].waitForExistence(timeout: 10))
         try audit("Word card")
+
+        // Populated states: learn the word, then audit every screen that shows it.
+        app.buttons["Learn"].tap()
+        XCTAssertTrue(app.buttons["Learn"].waitForNonExistence(timeout: 10), "the card closes after Learn")
+        try audit("Reader with a learning word")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["Words"].tap()
+        XCTAssertTrue(app.staticTexts["beach"].waitForExistence(timeout: 5))
+        try audit("Words with a word")
+        button(startingWith: "Review now").tap()
+        XCTAssertTrue(app.buttons["Show meaning"].waitForExistence(timeout: 5))
+        try audit("Review")
+        app.buttons["Show meaning"].tap()
+        XCTAssertTrue(app.staticTexts["ES: beach"].waitForExistence(timeout: 5))
+        try audit("Review with the meaning")
         XCTAssertTrue(issues.isEmpty, "Accessibility issues:\n" + issues.joined(separator: "\n"))
     }
 
@@ -102,6 +120,11 @@ final class LingleafUITests: XCTestCase {
         default:
             return false
         }
+    }
+
+    /// A tab bar button sits entirely inside the bar; rows scrolled under the bar only overlap it.
+    private static func isTabBarButton(_ element: XCUIElement, in tabBar: CGRect) -> Bool {
+        element.elementType == .button && tabBar.contains(element.frame)
     }
 
     /// Rows combine their texts into one label ("The Red Boat, Level A1, …").

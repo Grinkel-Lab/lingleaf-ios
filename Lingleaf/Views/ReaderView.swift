@@ -1,3 +1,4 @@
+import Accessibility
 import SwiftUI
 import LingleafCore
 
@@ -7,6 +8,19 @@ struct WordSelection: Identifiable {
     /// The word as it appears in the text ("animals").
     let word: String
     let sentence: String
+}
+
+/// A paragraph ready for the reader: the linked text and the words in it being learned.
+private struct MarkedParagraph {
+    var text: AttributedString
+    var learning: [LearningWord] = []
+}
+
+/// A word being learned, located in its paragraph (for the VoiceOver rotor).
+private struct LearningWord: Identifiable {
+    let id: Int
+    let word: String
+    let range: Range<String.Index>
 }
 
 struct ReaderView: View {
@@ -36,7 +50,6 @@ struct ReaderView: View {
             }
         }
         .navigationTitle(book?.title ?? "")
-        .accessibilityValue(Text(book?.progress ?? 0, format: .percent.precision(.fractionLength(0))))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
         .toolbar(.hidden, for: .tabBar)
@@ -74,11 +87,18 @@ struct ReaderView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: fontSize * 0.9) {
                     ForEach(paragraphs.indices, id: \.self) { index in
-                        Text(attributed(index, paragraphs[index]))
+                        let paragraph = marked(index, paragraphs[index])
+                        Text(paragraph.text)
                             .font(readingFont(size: fontSize))
                             .lineSpacing(fontSize * 0.35)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .tint(.primary)
+                            // Each word being learned, announced as "<word>, learning".
+                            .accessibilityRotor(Text("Learning words")) {
+                                ForEach(paragraph.learning) { word in
+                                    AccessibilityRotorEntry(Text("\(word.word), learning"), textRange: word.range)
+                                }
+                            }
                             .id(index)
                     }
                 }
@@ -90,9 +110,9 @@ struct ReaderView: View {
             }
             .scrollPosition(id: $position, anchor: .top)
             .safeAreaInset(edge: .top, spacing: 0) {
-                // Decorative: progress is also announced in the navigation title's value.
                 ProgressView(value: book?.progress ?? 0)
-                    .accessibilityHidden(true)
+                    .accessibilityLabel(Text("Reading progress"))
+                    .accessibilityValue(Text(book?.progress ?? 0, format: .percent.precision(.fractionLength(0))))
             }
             .onAppear {
                 proxy.scrollTo(min(book?.progressParagraph ?? 0, paragraphs.count - 1), anchor: .top)
@@ -104,9 +124,11 @@ struct ReaderView: View {
         }
     }
 
-    /// Every word is a link (`lingleaf://word?p=…&o=…&e=…`); words being learned are underlined in yellow.
-    private func attributed(_ index: Int, _ text: String) -> AttributedString {
+    /// Every word is a link (`lingleaf://word?p=…&o=…&e=…`); words being learned are underlined
+    /// (dark amber in light mode, the yellow marker in dark mode) on a light yellow tint.
+    private func marked(_ index: Int, _ text: String) -> MarkedParagraph {
         var attributed = AttributedString(text)
+        var learning: [LearningWord] = []
         for range in words[index] {
             guard let stringRange = Range(range.nsRange, in: text),
                   let attributedRange = Range(stringRange, in: attributed) else { continue }
@@ -119,12 +141,16 @@ struct ReaderView: View {
                 URLQueryItem(name: "e", value: String(range.end)),
             ]
             attributed[attributedRange].link = components.url
-            if model.isLearning(String(text[stringRange])) {
-                attributed[attributedRange].underlineStyle = Text.LineStyle(pattern: .solid, color: Brand.marker)
+            let word = String(text[stringRange])
+            if model.isLearning(word) {
+                attributed[attributedRange].underlineStyle = Text.LineStyle(pattern: .solid, color: Brand.markerLine)
                 attributed[attributedRange].backgroundColor = Brand.marker.opacity(0.18)
+                // Assistive technologies describe custom text attributes alongside the text.
+                attributed[attributedRange].accessibilityTextCustom = [String(localized: "Learning")]
+                learning.append(LearningWord(id: range.start, word: word, range: stringRange))
             }
         }
-        return attributed
+        return MarkedParagraph(text: attributed, learning: learning)
     }
 
     @ToolbarContentBuilder
@@ -144,6 +170,10 @@ struct ReaderView: View {
                     Label("Read aloud", systemImage: "speaker.wave.2")
                 }
             }
+            // The default toolbar grey measured 2.75:1; the brand ink passes WCAG AA.
+            // Both modifiers: tint colours the glyph on iOS 18, foregroundStyle on later toolbars.
+            .tint(Brand.ink)
+            .foregroundStyle(Brand.ink)
             Menu {
                 Button("Larger text", systemImage: "plus.magnifyingglass") {
                     model.library.updateSettings { $0.fontSize = min($0.fontSize + 2, 34) }
@@ -154,6 +184,8 @@ struct ReaderView: View {
             } label: {
                 Label("Text size", systemImage: "textformat.size")
             }
+            .tint(Brand.ink)
+            .foregroundStyle(Brand.ink)
         }
     }
 

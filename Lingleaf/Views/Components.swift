@@ -6,13 +6,27 @@ enum Brand {
     /// Adapts to dark mode (see AccentColor in the asset catalog).
     static let ink = Color.accentColor
     static let marker = Color(red: 0.96, green: 0.81, blue: 0.29)
+    /// Underline of words being learned. The yellow marker is too light on a white page
+    /// (≈1.5:1), so light mode uses dark amber #8A6A00; dark mode keeps the marker #F5CF4A.
+    static let markerLine = dynamic(light: rgb(0x8A6A00), dark: rgb(0xF5CF4A))
     static let learned = Color(red: 0.16, green: 0.45, blue: 0.31)
+    /// Streak text: #A0430A on light backgrounds, #FF8A50 on dark ones (both ≥4.5:1).
+    static let streak = dynamic(light: rgb(0xA0430A), dark: rgb(0xFF8A50))
     /// Secondary text darker than the system's, so it passes WCAG AA (≥4.5:1) on list backgrounds.
-    static let secondaryText = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(white: 0.74, alpha: 1)
-            : UIColor(white: 0.36, alpha: 1)
-    })
+    static let secondaryText = dynamic(light: UIColor(white: 0.36, alpha: 1), dark: UIColor(white: 0.74, alpha: 1))
+
+    private static func dynamic(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light })
+    }
+
+    private static func rgb(_ hex: UInt32) -> UIColor {
+        UIColor(
+            red: CGFloat((hex >> 16) & 0xFF) / 255,
+            green: CGFloat((hex >> 8) & 0xFF) / 255,
+            blue: CGFloat(hex & 0xFF) / 255,
+            alpha: 1
+        )
+    }
 }
 
 /// List section header with readable contrast.
@@ -107,6 +121,8 @@ struct BookRow: View {
 
 struct DailyGoalCard: View {
     @Environment(AppModel.self) private var model
+    /// The ring grows with Dynamic Type so the minutes inside it keep fitting.
+    @ScaledMetric(relativeTo: .title2) private var ringSize: CGFloat = 64
 
     var body: some View {
         let goal = model.state.settings.dailyGoalMinutes
@@ -121,16 +137,18 @@ struct DailyGoalCard: View {
                     .trim(from: 0, to: fraction)
                     .stroke(Brand.ink, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                // Hidden from VoiceOver: "N of M min today" below already says it.
                 Text("\(minutes)").font(.title2.bold().monospacedDigit())
+                    .accessibilityHidden(true)
             }
-            .frame(width: 64, height: 64)
+            .frame(width: ringSize, height: ringSize)
             VStack(alignment: .leading, spacing: 4) {
                 Text(fraction >= 1 ? "Today's goal done!" : "Read \(goal) minutes a day").font(.headline)
                 Text("\(minutes) of \(goal) min today").foregroundStyle(Brand.secondaryText)
                 if streak > 0 {
                     Label("\(streak) days in a row", systemImage: "flame.fill")
                         .font(.subheadline)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Brand.streak)
                 }
             }
         }

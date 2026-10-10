@@ -1,3 +1,4 @@
+import Accessibility
 import SwiftUI
 import LingleafCore
 
@@ -58,6 +59,8 @@ struct ReviewView: View {
                     model.speaker.speak(word.word, rate: model.state.settings.speechRate)
                 } label: {
                     Label("Listen", systemImage: "speaker.wave.2.circle.fill").labelStyle(.iconOnly).font(.title)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
             }
             if !word.context.isEmpty {
@@ -73,13 +76,26 @@ struct ReviewView: View {
                     }
                 }
             } else {
-                Button("Show meaning") { withAnimation { revealed = true } }
-                    .buttonStyle(.bordered)
+                Button("Show meaning") {
+                    withAnimation { revealed = true }
+                    announceMeaning(of: word)
+                }
+                .buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(24)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    /// The button VoiceOver was on disappears; say what appeared in its place.
+    private func announceMeaning(of word: VocabWord) {
+        var announcement = AttributedString(
+            word.translation.isEmpty ? String(localized: "No saved translation") : word.translation
+        )
+        // High priority: not cut off by VoiceOver moving focus away from the vanished button.
+        announcement.accessibilitySpeechAnnouncementPriority = .high
+        AccessibilityNotification.Announcement(announcement).post()
     }
 
     private func answer(correct: Bool) {

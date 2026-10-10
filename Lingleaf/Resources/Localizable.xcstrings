@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@, learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, aprendiendo"
+          }
+        }
+      }
+    },
     "%lld days in a row": {
       "localizations": {
         "en": {
@@ -263,6 +273,16 @@
         }
       }
     },
+    "Downloading": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando"
+          }
+        }
+      }
+    },
     "Filter": {
       "localizations": {
         "es": {
@@ -289,6 +309,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Obtener"
+          }
+        }
+      }
+    },
+    "Get %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener %@"
           }
         }
       }
@@ -379,6 +409,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aprendiendo"
+          }
+        }
+      }
+    },
+    "Learning words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palabras en aprendizaje"
           }
         }
       }
@@ -479,6 +519,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aún no tienes palabras. Mientras lees, toca una palabra y elige Aprender."
+          }
+        }
+      }
+    },
+    "Not available": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible"
           }
         }
       }

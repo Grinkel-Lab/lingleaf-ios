@@ -81,10 +81,16 @@ struct DiscoverView: View {
                     .accessibilityLabel(Text("In your library"))
             } else if downloading.contains(book.id) {
                 ProgressView()
-            } else {
+                    .accessibilityLabel(Text("Downloading"))
+            } else if book.textURL != nil {
                 Button("Get") { Task { await download(book) } }
                     .buttonStyle(.bordered)
-                    .disabled(book.textURL == nil)
+                    .accessibilityLabel(Text("Get \(book.title)"))
+            } else {
+                // No plain-text edition: a disabled button would be dimmed below readable contrast.
+                Text("Not available")
+                    .font(.subheadline)
+                    .foregroundStyle(Brand.secondaryText)
             }
         }
         .padding(.vertical, 4)
