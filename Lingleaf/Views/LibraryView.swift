@@ -69,6 +69,11 @@ struct LibraryView: View {
                 return
             }
             let data = try Data(contentsOf: url)
+            // The size above can be missing; check what was actually read too.
+            guard data.count <= Limits.maxBytes else {
+                message = String(localized: "That file is too large to import (10 MB maximum).")
+                return
+            }
             let book = try model.library.importText(fileName: url.lastPathComponent, text: String(decoding: data, as: UTF8.self))
             message = String(localized: "“\(book.title)” added to your library.")
         } catch {
