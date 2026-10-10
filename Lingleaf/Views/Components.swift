@@ -7,6 +7,23 @@ enum Brand {
     static let ink = Color.accentColor
     static let marker = Color(red: 0.96, green: 0.81, blue: 0.29)
     static let learned = Color(red: 0.16, green: 0.45, blue: 0.31)
+    /// Secondary text darker than the system's, so it passes WCAG AA (≥4.5:1) on list backgrounds.
+    static let secondaryText = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.74, alpha: 1)
+            : UIColor(white: 0.36, alpha: 1)
+    })
+}
+
+/// List section header with readable contrast.
+struct SectionHeader: View {
+    let title: LocalizedStringKey
+
+    init(_ title: LocalizedStringKey) { self.title = title }
+
+    var body: some View {
+        Text(title).foregroundStyle(Brand.secondaryText)
+    }
 }
 
 /// Reading font: Georgia, scaled with Dynamic Type.
@@ -71,7 +88,7 @@ struct BookRow: View {
                 Text(book.title).font(.headline).lineLimit(2)
                 HStack(spacing: 6) {
                     if let level = book.level { LevelBadge(level: level) }
-                    Text(book.author).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    Text(book.author).font(.subheadline).foregroundStyle(Brand.secondaryText).lineLimit(1)
                 }
                 if book.progress > 0 {
                     ProgressView(value: book.progress).padding(.top, 2)
@@ -104,7 +121,7 @@ struct DailyGoalCard: View {
             .frame(width: 64, height: 64)
             VStack(alignment: .leading, spacing: 4) {
                 Text(fraction >= 1 ? "Today's goal done!" : "Read \(goal) minutes a day").font(.headline)
-                Text("\(minutes) of \(goal) min today").foregroundStyle(.secondary)
+                Text("\(minutes) of \(goal) min today").foregroundStyle(Brand.secondaryText)
                 if streak > 0 {
                     Label("\(streak) days in a row", systemImage: "flame.fill")
                         .font(.subheadline)

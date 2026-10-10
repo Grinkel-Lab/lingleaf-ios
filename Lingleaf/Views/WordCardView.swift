@@ -32,17 +32,17 @@ struct WordCardView: View {
                     if let definition = entry?.definition {
                         Text("\(Text(entry?.partOfSpeech ?? "").italic()) · \(definition)")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.secondaryText)
                             .multilineTextAlignment(.center)
                     } else if entryLoaded {
-                        Text("No definition available.").font(.footnote).foregroundStyle(.secondary)
+                        Text("No definition available.").font(.footnote).foregroundStyle(Brand.secondaryText)
                     }
                     Divider().padding(.vertical, 4)
                     contextView
                     if let saved = model.state.word(headword) {
                         Label(saved.learned ? "You marked it as learned" : "Already in your words", systemImage: "checkmark.circle")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.secondaryText)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -73,10 +73,10 @@ struct WordCardView: View {
                 Text(headword).font(.largeTitle.weight(.semibold))
             }
             if let phonetic = entry?.phonetic {
-                Text(phonetic).font(.title3).foregroundStyle(.secondary)
+                Text(phonetic).font(.title3).foregroundStyle(Brand.secondaryText)
             }
             if headword != selection.word {
-                Text("In the text: \(selection.word)").font(.caption).foregroundStyle(.secondary)
+                Text("In the text: \(selection.word)").font(.caption).foregroundStyle(Brand.secondaryText)
             }
         }
     }
@@ -88,7 +88,7 @@ struct WordCardView: View {
         } else if translationFailed {
             Text("Translation unavailable. Connect to the internet once to download the language.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.secondaryText)
                 .multilineTextAlignment(.center)
         } else {
             ProgressView()
@@ -100,7 +100,7 @@ struct WordCardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(selection.sentence).font(readingFont(size: 17)).italic()
                 if let sentenceTranslation {
-                    Text(sentenceTranslation).font(.callout).foregroundStyle(.secondary)
+                    Text(sentenceTranslation).font(.callout).foregroundStyle(Brand.secondaryText)
                 }
             }
             Spacer(minLength: 8)

@@ -27,7 +27,7 @@ struct WordsView: View {
                                     }
                                 }
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Brand.secondaryText)
                             }
                         } icon: {
                             Image(systemName: "rectangle.stack")
@@ -45,7 +45,7 @@ struct WordsView: View {
 
                 if words.isEmpty {
                     Text(showLearned ? "No learned words yet." : "No words yet. While reading, tap a word and choose Learn.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.secondaryText)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
                 }
@@ -68,12 +68,12 @@ private struct WordRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(word.word).font(.headline)
                     if !word.phonetic.isEmpty {
-                        Text(word.phonetic).font(.caption).foregroundStyle(.secondary)
+                        Text(word.phonetic).font(.caption).foregroundStyle(Brand.secondaryText)
                     }
                 }
                 if !word.translation.isEmpty { Text(word.translation) }
                 if !word.context.isEmpty {
-                    Text(word.context).font(.caption).italic().foregroundStyle(.secondary).lineLimit(2)
+                    Text(word.context).font(.caption).italic().foregroundStyle(Brand.secondaryText).lineLimit(2)
                 }
             }
             Spacer()

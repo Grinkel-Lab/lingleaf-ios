@@ -10,7 +10,7 @@ struct SettingsView: View {
         let settings = model.state.settings
         NavigationStack {
             Form {
-                Section("Daily goal") {
+                Section(header: SectionHeader("Daily goal")) {
                     Stepper(
                         "\(settings.dailyGoalMinutes) minutes a day",
                         value: binding(\.dailyGoalMinutes),
@@ -19,7 +19,7 @@ struct SettingsView: View {
                     )
                 }
 
-                Section("Reading") {
+                Section(header: SectionHeader("Reading")) {
                     Slider(value: binding(\.fontSize), in: 14...34, step: 2) {
                         Text("Text size")
                     } minimumValueLabel: {
@@ -42,7 +42,7 @@ struct SettingsView: View {
                         model.speaker.speak("Reading ten minutes a day makes a big difference.", rate: settings.speechRate)
                     }
                 } header: {
-                    Text("Voice")
+                    Text("Voice").foregroundStyle(Brand.secondaryText)
                 }
 
                 Section {
@@ -55,18 +55,19 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Translation")
+                    Text("Translation").foregroundStyle(Brand.secondaryText)
                 } footer: {
                     Text("Translation happens on your iPhone. The first time, iOS asks to download the language; after that it works offline.")
+                        .foregroundStyle(Brand.secondaryText)
                 }
 
-                Section("About") {
+                Section(header: SectionHeader("About")) {
                     Link(destination: Self.repositoryURL) {
                         Label("Source code (open source, MIT)", systemImage: "chevron.left.forwardslash.chevron.right")
                     }
                     Text("Books: Project Gutenberg (public domain). Definitions: dictionaryapi.dev. No accounts, no ads, no tracking.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.secondaryText)
                 }
             }
             .navigationTitle("Settings")

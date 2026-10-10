@@ -47,16 +47,29 @@ final class LingleafUITests: XCTestCase {
     }
 
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
-    /// hit areas…) on every main screen.
+    /// hit areas…) on every main screen. Collects every issue before failing,
+    /// so one CI run shows the whole list.
     func testAccessibilityAudit() throws {
+        var issues: [String] = []
+        func audit(_ screen: String) throws {
+            try app.performAccessibilityAudit { issue in
+                let element = issue.element.map { "\($0.elementType) '\($0.label)'" } ?? "screen"
+                issues.append("[\(screen)] \(issue.compactDescription) — \(element)")
+                return true
+            }
+        }
         for tab in ["Library", "Discover", "Words", "Settings"] {
             app.tabBars.buttons[tab].tap()
-            try app.performAccessibilityAudit()
+            try audit(tab)
         }
         app.tabBars.buttons["Library"].tap()
         button(startingWith: "The Red Boat").tap()
         XCTAssertTrue(app.links["beach"].firstMatch.waitForExistence(timeout: 10))
-        try app.performAccessibilityAudit()
+        try audit("Reader")
+        app.links["beach"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Learn"].waitForExistence(timeout: 10))
+        try audit("Word card")
+        XCTAssertTrue(issues.isEmpty, "Accessibility issues:\n" + issues.joined(separator: "\n"))
     }
 
     /// Rows combine their texts into one label ("The Red Boat, Level A1, …").

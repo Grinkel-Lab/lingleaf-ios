@@ -33,9 +33,9 @@ struct DiscoverView: View {
                         ForEach(results ?? recommended) { row($0) }
                     }
                 } header: {
-                    Text(results == nil ? "Recommended for learners" : "Results")
+                    Text(results == nil ? "Recommended for learners" : "Results").foregroundStyle(Brand.secondaryText)
                 } footer: {
-                    Text("Free public-domain classics from Project Gutenberg.")
+                    Text("Free public-domain classics from Project Gutenberg.").foregroundStyle(Brand.secondaryText)
                 }
             }
             .navigationTitle("Discover")
@@ -65,7 +65,7 @@ struct DiscoverView: View {
                 HStack(spacing: 6) {
                     if let level = GutenbergClient.level(for: book.id) { LevelBadge(level: level) }
                     Text(book.authorName ?? String(localized: "Unknown author"))
-                        .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.subheadline).foregroundStyle(Brand.secondaryText).lineLimit(1)
                 }
             }
             Spacer(minLength: 8)

@@ -13,11 +13,11 @@ struct LibraryView: View {
             List {
                 Section { DailyGoalCard() }
                 if let current = model.state.lastOpened {
-                    Section("Continue reading") {
+                    Section(header: SectionHeader("Continue reading")) {
                         NavigationLink(value: current.id) { BookRow(book: current) }
                     }
                 }
-                Section("Your books") {
+                Section(header: SectionHeader("Your books")) {
                     ForEach(model.state.books.reversed()) { book in
                         NavigationLink(value: book.id) { BookRow(book: book) }
                             .swipeActions {

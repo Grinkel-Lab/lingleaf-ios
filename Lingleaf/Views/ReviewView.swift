@@ -61,11 +61,11 @@ struct ReviewView: View {
                 }
             }
             if !word.context.isEmpty {
-                Text(word.context).italic().multilineTextAlignment(.center).foregroundStyle(.secondary)
+                Text(word.context).italic().multilineTextAlignment(.center).foregroundStyle(Brand.secondaryText)
             }
             if revealed {
                 VStack(spacing: 4) {
-                    if !word.phonetic.isEmpty { Text(word.phonetic).foregroundStyle(.secondary) }
+                    if !word.phonetic.isEmpty { Text(word.phonetic).foregroundStyle(Brand.secondaryText) }
                     if word.translation.isEmpty {
                         Text("No saved translation").font(.title2)
                     } else {
