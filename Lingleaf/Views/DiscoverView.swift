@@ -46,14 +46,15 @@ struct DiscoverView: View {
                         ForEach(books) { row($0) }
                     }
                 } header: {
-                    Text(results == nil ? "Recommended for learners" : "Results").foregroundStyle(Brand.secondaryText)
-                }
-                // Its own section, like the note in Settings: as a footer, or as a row
-                // among the books, it did not scale with Dynamic Type in the audit.
-                Section {
-                    Text("Free public-domain classics from Project Gutenberg.")
-                        .font(.footnote)
-                        .foregroundStyle(Brand.secondaryText)
+                    // The credit lives in the header: as a footer, a row among the books or
+                    // a section of its own, the audit reported it as not scaling with Dynamic Type.
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(results == nil ? "Recommended for learners" : "Results")
+                        Text("Free public-domain classics from Project Gutenberg.")
+                            .font(.footnote)
+                            .textCase(nil)
+                    }
+                    .foregroundStyle(Brand.secondaryText)
                 }
             }
             .navigationTitle("Discover")
