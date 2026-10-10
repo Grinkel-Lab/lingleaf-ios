@@ -52,12 +52,17 @@ struct ContentView: View {
 
 struct BookCover: View {
     let title: String
-    private static let palette: [Color] = [Brand.ink, .indigo, .orange, .pink, .green, .brown, .purple]
+    /// Dark tones only, so the white initial keeps ≥4.5:1 contrast.
+    private static let palette: [Color] = [
+        Color(red: 0.18, green: 0.42, blue: 0.37), Color(red: 0.24, green: 0.35, blue: 0.50),
+        Color(red: 0.55, green: 0.27, blue: 0.07), Color(red: 0.56, green: 0.23, blue: 0.27),
+        Color(red: 0.30, green: 0.36, blue: 0.15), Color(red: 0.43, green: 0.30, blue: 0.56),
+    ]
 
     var body: some View {
         let seed = title.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         RoundedRectangle(cornerRadius: 6)
-            .fill(Self.palette[seed % Self.palette.count].gradient)
+            .fill(Self.palette[seed % Self.palette.count])
             .frame(width: 44, height: 62)
             .overlay(Text(String(title.prefix(1))).font(.title2.bold()).foregroundStyle(.white))
             .accessibilityHidden(true)

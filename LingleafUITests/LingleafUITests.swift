@@ -53,8 +53,8 @@ final class LingleafUITests: XCTestCase {
         var issues: [String] = []
         func audit(_ screen: String) throws {
             try app.performAccessibilityAudit { issue in
-                let element = issue.element.map { "\($0.elementType) '\($0.label)'" } ?? "screen"
-                issues.append("[\(screen)] \(issue.compactDescription) — \(element)")
+                let element = issue.element.map { "type \($0.elementType.rawValue) '\($0.label)' id '\($0.identifier)' frame \($0.frame)" } ?? "screen"
+                issues.append("[\(screen)] \(issue.compactDescription) — \(element) — \(issue.detailedDescription)")
                 return true
             }
         }

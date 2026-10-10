@@ -107,7 +107,10 @@ struct WordCardView: View {
             Button {
                 model.speaker.speak(selection.sentence, rate: model.state.settings.speechRate)
             } label: {
-                Label("Listen to the sentence", systemImage: "speaker.wave.1").labelStyle(.iconOnly)
+                Label("Listen to the sentence", systemImage: "speaker.wave.1")
+                    .labelStyle(.iconOnly)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -23,9 +23,9 @@ struct SettingsView: View {
                     Slider(value: binding(\.fontSize), in: 14...34, step: 2) {
                         Text("Text size")
                     } minimumValueLabel: {
-                        Image(systemName: "textformat.size.smaller").accessibilityHidden(true)
+                        Image(systemName: "textformat.size.smaller").foregroundStyle(Brand.secondaryText).accessibilityHidden(true)
                     } maximumValueLabel: {
-                        Image(systemName: "textformat.size.larger").accessibilityHidden(true)
+                        Image(systemName: "textformat.size.larger").foregroundStyle(Brand.secondaryText).accessibilityHidden(true)
                     }
                     Text(verbatim: "All animals are equal.").font(readingFont(size: settings.fontSize))
                 }
@@ -34,9 +34,9 @@ struct SettingsView: View {
                     Slider(value: binding(\.speechRate), in: 0.3...0.6) {
                         Text("Speech speed")
                     } minimumValueLabel: {
-                        Image(systemName: "tortoise").accessibilityHidden(true)
+                        Image(systemName: "tortoise").foregroundStyle(Brand.secondaryText).accessibilityHidden(true)
                     } maximumValueLabel: {
-                        Image(systemName: "hare").accessibilityHidden(true)
+                        Image(systemName: "hare").foregroundStyle(Brand.secondaryText).accessibilityHidden(true)
                     }
                     Button("Test the voice", systemImage: "speaker.wave.2") {
                         model.speaker.speak("Reading ten minutes a day makes a big difference.", rate: settings.speechRate)

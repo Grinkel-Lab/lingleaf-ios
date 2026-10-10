@@ -11,29 +11,17 @@ struct WordsView: View {
         NavigationStack {
             List {
                 Section {
-                    NavigationLink {
-                        ReviewView()
-                    } label: {
-                        Label {
-                            VStack(alignment: .leading) {
-                                Text("Review now")
-                                Group {
-                                    if due > 0 {
-                                        Text("\(due) words to review")
-                                    } else if model.state.words.isEmpty {
-                                        Text("Save words while you read.")
-                                    } else {
-                                        Text("Nothing to review. Come back tomorrow!")
-                                    }
-                                }
-                                .font(.subheadline)
-                                .foregroundStyle(Brand.secondaryText)
-                            }
-                        } icon: {
-                            Image(systemName: "rectangle.stack")
+                    // A disabled link would be dimmed below readable contrast, so with
+                    // nothing due the row is plain text instead.
+                    if due > 0 {
+                        NavigationLink {
+                            ReviewView()
+                        } label: {
+                            reviewSummary(due: due)
                         }
+                    } else {
+                        reviewSummary(due: due)
                     }
-                    .disabled(due == 0)
                 }
 
                 Picker("Filter", selection: $showLearned) {
@@ -55,6 +43,28 @@ struct WordsView: View {
             }
             .navigationTitle("Words")
         }
+    }
+
+    private func reviewSummary(due: Int) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "rectangle.stack").foregroundStyle(Brand.ink).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Review now").font(.body)
+                Group {
+                    if due > 0 {
+                        Text("\(due) words to review")
+                    } else if model.state.words.isEmpty {
+                        Text("Save words while you read.")
+                    } else {
+                        Text("Nothing to review. Come back tomorrow!")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(Brand.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

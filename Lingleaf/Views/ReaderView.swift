@@ -36,6 +36,7 @@ struct ReaderView: View {
             }
         }
         .navigationTitle(book?.title ?? "")
+        .accessibilityValue(Text(book?.progress ?? 0, format: .percent.precision(.fractionLength(0))))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
         .sheet(item: $selection) { selection in
@@ -88,8 +89,9 @@ struct ReaderView: View {
             }
             .scrollPosition(id: $position, anchor: .top)
             .safeAreaInset(edge: .top, spacing: 0) {
+                // Decorative: progress is also announced in the navigation title's value.
                 ProgressView(value: book?.progress ?? 0)
-                    .accessibilityLabel(Text("Reading progress"))
+                    .accessibilityHidden(true)
             }
             .onAppear {
                 proxy.scrollTo(min(book?.progressParagraph ?? 0, paragraphs.count - 1), anchor: .top)
