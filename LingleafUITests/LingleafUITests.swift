@@ -46,6 +46,17 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["All done!"].waitForExistence(timeout: 5))
     }
 
+    func testFilterRecommendedBooksByLevel() {
+        app.tabBars.buttons["Discover"].tap()
+        let b1 = app.buttons["level-filter-B1"]
+        XCTAssertTrue(b1.waitForExistence(timeout: 10), "the level chips show above the recommended books")
+        b1.tap()
+        XCTAssertTrue(app.staticTexts["Peter Pan"].waitForExistence(timeout: 5), "B1 books stay")
+        XCTAssertTrue(app.staticTexts["Aesop's Fables"].waitForNonExistence(timeout: 5), "the A2 book is filtered out")
+        app.buttons["level-filter-all"].tap()
+        XCTAssertTrue(app.staticTexts["Aesop's Fables"].waitForExistence(timeout: 5), "All shows every book again")
+    }
+
     /// S6 Listen. XCUITest can't hear the speaker, so in -ui-testing mode the app records
     /// the last spoken text and shows it in a test-only element (`LastSpokenProbe`).
     /// Each card is closed before the check, so the element is read from the main

@@ -11,13 +11,22 @@ struct DiscoverView: View {
     @State private var failed = false
     @State private var downloading: Set<Int> = []
     @State private var message: String?
+    /// Level chosen in the filter chips; nil shows every recommended book.
+    @State private var level: String?
+
+    /// Levels that have at least one recommended book, easiest first.
+    private static let filterLevels = GutenbergClient.levels.filter { level in
+        GutenbergClient.recommended.contains { $0.level == level }
+    }
 
     private var downloaded: Set<Int> { Set(model.state.books.compactMap(\.gutenbergID)) }
+    private var books: [GutenbergBook] { results ?? GutenbergClient.filter(recommended, level: level) }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
+                    if results == nil && !recommended.isEmpty { levelFilter }
                     if loading {
                         ProgressView().frame(maxWidth: .infinity)
                     } else if failed {
@@ -27,10 +36,14 @@ struct DiscoverView: View {
                                 .buttonStyle(.bordered)
                         }
                         .frame(maxWidth: .infinity)
-                    } else if (results ?? recommended).isEmpty {
-                        Text("No books found. Try another title or author.")
+                    } else if books.isEmpty {
+                        if results == nil && !recommended.isEmpty {
+                            Text("No recommended books at this level.")
+                        } else {
+                            Text("No books found. Try another title or author.")
+                        }
                     } else {
-                        ForEach(results ?? recommended) { row($0) }
+                        ForEach(books) { row($0) }
                     }
                 } header: {
                     // The credit lives in the header: as a footer, a row among the books or
@@ -55,19 +68,56 @@ struct DiscoverView: View {
         }
     }
 
+    /// "All" plus one chip per level; scrolls sideways when the text is large.
+    private var levelFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(nil)
+                ForEach(Self.filterLevels, id: \.self) { chip($0) }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 4)
+        }
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+    }
+
+    private func chip(_ value: String?) -> some View {
+        let selected = level == value
+        return Button {
+            level = value
+        } label: {
+            Group {
+                if let value { Text(verbatim: value) } else { Text("All") }
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 16)
+            .frame(minHeight: 44)
+            // System background is white in light mode and black in dark mode, where the ink is light.
+            .foregroundStyle(selected ? Color(uiColor: .systemBackground) : Color.primary)
+            .background(selected ? Brand.ink : Color(uiColor: .secondarySystemGroupedBackground), in: Capsule())
+            .contentShape(Capsule())
+        }
+        // Plain style so a tap in the row triggers only this chip.
+        .buttonStyle(.plain)
+        .accessibilityLabel(value.map { Text("Level \($0)") } ?? Text("All levels"))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("level-filter-\(value ?? "all")")
+    }
+
     private func row(_ book: GutenbergBook) -> some View {
         HStack(spacing: 14) {
             AsyncImage(url: book.coverURL) { image in
                 image.resizable().scaledToFill()
             } placeholder: {
-                BookCover(title: book.title)
+                BookCover(title: book.displayTitle)
             }
             .frame(width: 44, height: 62)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(book.title).font(.headline)
+                Text(book.displayTitle).font(.headline)
                 HStack(spacing: 6) {
                     if let level = GutenbergClient.level(for: book.id) { LevelBadge(level: level) }
                     Text(book.authorName ?? String(localized: "Unknown author"))
@@ -117,15 +167,15 @@ struct DiscoverView: View {
         do {
             let text = try await model.gutenberg.downloadText(book)
             model.library.addBook(
-                title: book.title,
+                title: book.displayTitle,
                 author: book.authorName ?? String(localized: "Unknown author"),
                 text: text,
                 level: GutenbergClient.level(for: book.id),
                 gutenbergID: book.id
             )
-            message = String(localized: "“\(book.title)” is in your library.")
+            message = String(localized: "“\(book.displayTitle)” is in your library.")
         } catch {
-            message = String(localized: "Couldn't download “\(book.title)”. Try again.")
+            message = String(localized: "Couldn't download “\(book.displayTitle)”. Try again.")
         }
     }
 }

@@ -153,12 +153,32 @@
         }
       }
     },
+    "All": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        }
+      }
+    },
     "All done!": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "¡Listo!"
+          }
+        }
+      }
+    },
+    "All levels": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos los niveles"
           }
         }
       }
@@ -519,6 +539,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aún no tienes palabras aprendidas."
+          }
+        }
+      }
+    },
+    "No recommended books at this level.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay libros recomendados en este nivel."
           }
         }
       }
