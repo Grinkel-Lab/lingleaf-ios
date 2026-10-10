@@ -55,7 +55,8 @@ final class LingleafUITests: XCTestCase {
             // Tab switches cross-fade; auditing mid-animation measures half-faded
             // text and reports contrast failures that are not there.
             RunLoop.current.run(until: Date().addingTimeInterval(1.5))
-            let tabBar = app.tabBars.firstMatch.frame
+            // The reader hides the tab bar; then nothing can sit under it.
+            let tabBar = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.frame : .null
             try app.performAccessibilityAudit { issue in
                 // Rows scrolled under the translucent tab bar are measured against
                 // the bar's blur; scrolled into view they read normally.
