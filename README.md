@@ -1,0 +1,69 @@
+<p align="center"><img src="docs/icon.png" width="96" alt=""></p>
+
+# Lingleaf for iOS
+
+**Learn English by reading real books.** Tap any word to see its translation,
+pronunciation and meaning, and highlight what you learn. Free and open source.
+
+> 🇪🇸 **Aprende inglés leyendo libros de verdad.** Toca cualquier palabra para ver su
+> traducción, pronunciación y significado, y subraya lo que aprendes. Gratis y open source.
+
+Android version: [lingleaf-android](https://github.com/erobinsonc/lingleaf-android) · Product spec: [SPEC.md](SPEC.md)
+
+## Features
+
+- **Tap a word**: base form, IPA, on-device translation (Apple Translation), definition, and the sentence translated.
+- **Learn / Learned**: words you're learning get a yellow underline in every book, inflected forms too.
+- **Review** with spaced repetition (1, 3, 7, 14, 30 days).
+- **Read aloud** a word, a sentence or a paragraph (works with the ringer muted).
+- **Thousands of free books** from Project Gutenberg, plus 3 original graded stories (A1–B1). Import your own `.txt`.
+- **Daily goal and streak.**
+- No accounts, no ads, no tracking.
+
+## Build
+
+Requirements: Xcode 16+, iOS 18+, [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+
+```bash
+brew install xcodegen swiftlint
+xcodegen generate && open Lingleaf.xcodeproj    # then ⌘R on your iPhone
+swift test --package-path LingleafCore          # logic tests
+swiftlint lint
+```
+
+Apple Translation doesn't run in the Simulator; try translations on a real device.
+
+## Architecture
+
+- `LingleafCore/` — Swift package, Foundation only: text tools, base forms, spaced repetition,
+  streak, Gutenberg catalog, dictionary client, library storage. Same rules and tests as
+  `core/` in lingleaf-android. ≥90% line coverage is enforced.
+- `Lingleaf/` — SwiftUI app. Each paragraph is one `Text` whose words are links; tapping one opens the word card.
+- `LingleafUITests/` — UI flows and Apple's accessibility audit, run against the app in an
+  offline `-ui-testing` mode with canned answers.
+
+## Quality gates (every pull request)
+
+| Gate | Tool |
+|---|---|
+| Logic tests + coverage ≥90% | XCTest, llvm-cov |
+| UI flows (tap a word → card → Learn; review) | XCUITest |
+| Accessibility audit on every screen | `performAccessibilityAudit()` |
+| Code style | SwiftLint |
+| Secrets | gitleaks |
+| Vulnerable dependencies | Dependabot, dependency review* |
+| Static security analysis | CodeQL* |
+
+\* Runs automatically once the repository is public (free for open source).
+
+## Privacy
+
+Data stays on your device. Network requests go only to `gutendex.com` / `gutenberg.org`
+(books) and `api.dictionaryapi.dev` (definitions), always over HTTPS. Translation runs
+on the device with Apple Translation. The app ships a privacy manifest declaring no tracking
+and no data collection.
+
+## License
+
+[MIT](LICENSE). Bundled stories in `Lingleaf/Resources/Books` are original and dedicated
+to the public domain (CC0). Project Gutenberg books are public domain in the US.
