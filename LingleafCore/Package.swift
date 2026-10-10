@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import PackageDescription
 
 // Pure-Foundation logic shared by the app: text tools, base forms, spaced
@@ -11,5 +11,7 @@ let package = Package(
     targets: [
         .target(name: "LingleafCore"),
         .testTarget(name: "LingleafCoreTests", dependencies: ["LingleafCore"]),
-    ]
+    ],
+    // Swift 6 strict concurrency can come later; the app target also uses Swift 5 mode.
+    swiftLanguageModes: [.v5]
 )
