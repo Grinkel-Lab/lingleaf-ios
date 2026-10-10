@@ -65,3 +65,31 @@ jobs:
         with:
           name: test-results
           path: TestResults.xcresult
+      # ScreenTour attaches a screenshot of every screen (EN/ES, light/dark).
+      - name: Export screenshots
+        if: always()
+        run: python3 .github/scripts/export-screenshots.py TestResults.xcresult
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: screenshots
+          if-no-files-found: ignore
+
+  screenshots:
+    name: Publish screenshots
+    needs: app
+    if: always() && github.event.pull_request.head.repo.fork != true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ios-screenshots
+          path: screenshots
+      - run: ./.github/scripts/publish-screenshots.sh ios "${{ github.head_ref || github.ref_name }}" "${{ github.event.pull_request.head.sha || github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
