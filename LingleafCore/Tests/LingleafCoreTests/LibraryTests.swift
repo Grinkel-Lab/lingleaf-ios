@@ -145,7 +145,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertTrue(library.state.words.isEmpty, "no-op when the word doesn't exist")
 
         library.saveWord("Dog", learned: false)
-        library.setTranslation("dog", "", language: "es")
+        library.setTranslation("dog", " ", language: "es")
         XCTAssertEqual(library.state.word("dog")?.translation, "", "blank text is ignored")
         library.setTranslation("Dog", "perro", language: "es")
         XCTAssertEqual(library.state.word("dog")?.translation, "perro")

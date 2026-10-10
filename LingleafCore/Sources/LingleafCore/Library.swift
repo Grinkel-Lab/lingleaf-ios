@@ -265,7 +265,7 @@ public final class Library {
     /// a translation in that language.
     public func setTranslation(_ word: String, _ text: String, language: String) {
         let key = TextTools.normalize(word)
-        guard !text.isEmpty, var entry = state.words.first(where: { $0.word == key }),
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, var entry = state.words.first(where: { $0.word == key }),
               entry.translation.isEmpty || entry.translationLanguage != language else { return }
         entry.translation = text
         entry.translationLanguage = language
