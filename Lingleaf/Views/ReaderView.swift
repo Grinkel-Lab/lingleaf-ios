@@ -170,6 +170,8 @@ struct ReaderView: View {
                     Label { Text("Read aloud") } icon: { inkIcon("speaker.wave.2") }
                 }
             }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.plain)
             Menu {
                 Button("Larger text", systemImage: "plus.magnifyingglass") {
                     model.library.updateSettings { $0.fontSize = min($0.fontSize + 2, 34) }
@@ -180,13 +182,16 @@ struct ReaderView: View {
             } label: {
                 Label { Text("Text size") } icon: { inkIcon("textformat.size") }
             }
+            .labelStyle(.iconOnly)
+            .menuStyle(.button)
+            .buttonStyle(.plain)
         }
     }
 
-    /// The default toolbar grey measured 2.75:1. Toolbar tint was lost after the word
-    /// sheet closed, so the glyph itself carries the brand ink (palette rendering).
+    /// The default toolbar grey measured 2.75:1 and toolbar tint was lost after the word
+    /// sheet closed, so these items use the plain style and colour the glyph themselves.
     private func inkIcon(_ name: String) -> some View {
-        Image(systemName: name).symbolRenderingMode(.palette).foregroundStyle(Brand.ink)
+        Image(systemName: name).foregroundStyle(Brand.ink)
     }
 
     private func handle(_ url: URL) {
