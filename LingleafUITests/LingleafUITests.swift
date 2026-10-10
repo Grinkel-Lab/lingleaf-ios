@@ -169,6 +169,32 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["No words yet. While reading, tap a word and choose Save word."].waitForExistence(timeout: 5))
     }
 
+    /// Deleting a word in Words (swipe action) offers Undo, which puts the word back.
+    func testDeletingAWordOffersUndo() {
+        button(startingWith: "The Red Boat").tap()
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+        beach.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.staticTexts["“beach” saved to Words"].waitForExistence(timeout: 5))
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["Words"].tap()
+        let row = element(labelled: "beach")
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the word is in Words")
+        row.swipeLeft()
+        let delete = app.buttons["Delete word"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), "the swipe shows Delete word")
+        delete.tap()
+
+        XCTAssertTrue(app.staticTexts["“beach” deleted"].waitForExistence(timeout: 3), "Words confirms the delete")
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 3), "Words offers Undo")
+        undo.tap()
+        XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "Undo puts the word back")
+    }
+
     /// S14: with no language saved or picked from the device, the first card asks
     /// "Translate into:"; the choice is saved and translates the card in place.
     func testWithoutALanguageTheCardAsksAndTranslatesInPlace() {
