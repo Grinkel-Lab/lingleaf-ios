@@ -54,11 +54,13 @@ struct SettingsView: View {
                             Text(AppModel.languageName(code)).tag(code)
                         }
                     }
+                    // A row rather than a section footer: footers use a fixed style
+                    // that fails the contrast and Dynamic Type audits.
+                    Text("Translation happens on your iPhone. The first time, iOS asks to download the language; after that it works offline.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.secondaryText)
                 } header: {
                     Text("Translation").foregroundStyle(Brand.secondaryText)
-                } footer: {
-                    Text("Translation happens on your iPhone. The first time, iOS asks to download the language; after that it works offline.")
-                        .foregroundStyle(Brand.secondaryText)
                 }
 
                 Section(header: SectionHeader("About")) {

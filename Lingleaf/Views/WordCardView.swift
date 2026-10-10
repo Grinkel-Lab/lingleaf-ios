@@ -99,6 +99,7 @@ struct WordCardView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(selection.sentence).font(readingFont(size: 17)).italic()
+                    .fixedSize(horizontal: false, vertical: true)
                 if let sentenceTranslation {
                     Text(sentenceTranslation).font(.callout).foregroundStyle(Brand.secondaryText)
                 }
@@ -122,11 +123,14 @@ struct WordCardView: View {
         Button(action: action) {
             Text(title)
                 .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: 58)
-                .background(background)
                 .foregroundStyle(foreground)
+                .frame(maxWidth: .infinity, minHeight: 58)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // The button reaches into the bottom safe area; colour all of it so the
+        // label is always measured against its own background.
+        .background(background.ignoresSafeArea(edges: .bottom))
     }
 
     private func load() async {
