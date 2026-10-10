@@ -42,7 +42,7 @@ struct SettingsView: View {
                         model.speaker.speak("Reading ten minutes a day makes a big difference.", rate: settings.speechRate)
                     }
                 } header: {
-                    Text("Voice").foregroundStyle(Brand.secondaryText)
+                    SectionHeader("Voice")
                 }
 
                 Section {
@@ -60,7 +60,7 @@ struct SettingsView: View {
                         .font(.footnote)
                         .foregroundStyle(Brand.secondaryText)
                 } header: {
-                    Text("Translation").foregroundStyle(Brand.secondaryText)
+                    SectionHeader("Translation")
                 }
 
                 Section(header: SectionHeader("About")) {

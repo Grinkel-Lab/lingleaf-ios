@@ -35,6 +35,7 @@ struct DiscoverView: View {
                     // A row rather than a section footer, which would not scale with Dynamic Type.
                     Text("Free public-domain classics from Project Gutenberg.")
                         .font(.footnote)
+                        .fixedSize(horizontal: false, vertical: true)
                         .foregroundStyle(Brand.secondaryText)
                 } header: {
                     Text(results == nil ? "Recommended for learners" : "Results").foregroundStyle(Brand.secondaryText)
@@ -63,11 +64,11 @@ struct DiscoverView: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(book.title).font(.headline).lineLimit(2)
+                Text(book.title).font(.headline)
                 HStack(spacing: 6) {
                     if let level = GutenbergClient.level(for: book.id) { LevelBadge(level: level) }
                     Text(book.authorName ?? String(localized: "Unknown author"))
-                        .font(.subheadline).foregroundStyle(Brand.secondaryText).lineLimit(1)
+                        .font(.subheadline).foregroundStyle(Brand.secondaryText)
                 }
             }
             Spacer(minLength: 8)
