@@ -28,6 +28,13 @@ final class LibraryTests: XCTestCase {
         return library
     }
 
+    func testKeepsACopyOfAFileThatCannotBeRead() {
+        storage.files["words.json"] = "not json"
+        let library = library()
+        XCTAssertTrue(library.state.words.isEmpty)
+        XCTAssertEqual(storage.files["words.json.corrupt"], "not json")
+    }
+
     func testSeedsBundledStoriesOnce() {
         let library = library()
         library.seedIfNeeded { stories }
@@ -125,6 +132,38 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(self.library().state.settings, Settings())
         storage.files["settings.json"] = "{}"
         XCTAssertEqual(self.library().state.settings, Settings())
+    }
+
+    // S10 Import: the file picker can't be driven by UI tests, so the import rules are covered here.
+    func testImportTitleIsTheFileNameWithoutItsExtension() {
+        XCTAssertEqual(Library.importTitle(fileName: "Alice.txt"), "Alice")
+        XCTAssertEqual(Library.importTitle(fileName: "my.story.TXT"), "my.story")
+        XCTAssertEqual(Library.importTitle(fileName: ".txt"), "Book")
+        XCTAssertEqual(Library.importTitle(fileName: "  Notes .txt"), "Notes")
+    }
+
+    func testImportTextStripsBoilerplateAndAddsTheBook() throws {
+        let library = library()
+        let raw = "The Project Gutenberg eBook\n*** START OF THE PROJECT GUTENBERG EBOOK ALICE ***\n"
+            + "Chapter 1\n\nDown the rabbit hole.\n*** END OF THE PROJECT GUTENBERG EBOOK ALICE ***\nLicense text."
+        let book = try library.importText(fileName: "Alice.txt", text: raw)
+        XCTAssertEqual(book.title, "Alice")
+        XCTAssertEqual(book.author, "—")
+        XCTAssertEqual(book.paragraphCount, 2)
+        XCTAssertEqual(library.state.books.map(\.id), [book.id])
+        XCTAssertEqual(library.openBook(book.id), ["Chapter 1", "Down the rabbit hole."])
+    }
+
+    func testImportTextRefusesEmptyOrBoilerplateOnlyText() {
+        let library = library()
+        XCTAssertThrowsError(try library.importText(fileName: "empty.txt", text: "  \n\n ")) {
+            XCTAssertEqual($0 as? ImportError, .empty)
+        }
+        let boilerplateOnly = "Header\n*** START OF THE PROJECT GUTENBERG EBOOK X ***\n\n"
+            + "*** END OF THE PROJECT GUTENBERG EBOOK X ***\nFooter"
+        XCTAssertThrowsError(try library.importText(fileName: "x.txt", text: boilerplateOnly))
+        XCTAssertTrue(library.state.books.isEmpty, "nothing is added")
+        XCTAssertNil(storage.files["books.json"], "nothing is saved")
     }
 
     func testFileStorageRoundTrip() throws {

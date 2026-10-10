@@ -63,13 +63,19 @@ struct LibraryView: View {
             let url = try result.get()
             let access = url.startAccessingSecurityScopedResource()
             defer { if access { url.stopAccessingSecurityScopedResource() } }
+            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            guard size <= Limits.maxBytes else {
+                message = String(localized: "That file is too large to import (10 MB maximum).")
+                return
+            }
             let data = try Data(contentsOf: url)
-            let raw = String(decoding: data, as: UTF8.self)
-            let text = GutenbergClient.stripBoilerplate(raw)
-            guard !text.isEmpty else { throw NetworkError("empty") }
-            let title = url.deletingPathExtension().lastPathComponent
-            model.library.addBook(title: title, author: "—", text: text)
-            message = String(localized: "“\(title)” added to your library.")
+            // The size above can be missing; check what was actually read too.
+            guard data.count <= Limits.maxBytes else {
+                message = String(localized: "That file is too large to import (10 MB maximum).")
+                return
+            }
+            let book = try model.library.importText(fileName: url.lastPathComponent, text: String(decoding: data, as: UTF8.self))
+            message = String(localized: "“\(book.title)” added to your library.")
         } catch {
             message = String(localized: "Couldn't import that file. Try a plain-text (.txt) English book.")
         }

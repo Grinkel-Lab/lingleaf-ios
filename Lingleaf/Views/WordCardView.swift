@@ -137,8 +137,12 @@ struct WordCardView: View {
         entry = await model.dictionary.lookup(selection.word)
         entryLoaded = true
         if let fake = model.fakeTranslator {
-            translation = fake(headword)
-            sentenceTranslation = fake(selection.sentence)
+            do {
+                translation = try fake(headword)
+                sentenceTranslation = try fake(selection.sentence)
+            } catch {
+                translationFailed = true
+            }
         } else {
             configuration = TranslationSession.Configuration(
                 source: Locale.Language(identifier: "en"),

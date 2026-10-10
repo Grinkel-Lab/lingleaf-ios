@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@, learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, aprendiendo"
+          }
+        }
+      }
+    },
     "%lld days in a row": {
       "localizations": {
         "en": {
@@ -53,6 +63,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld minutos al día"
+          }
+        }
+      }
+    },
+    "%lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld de %lld"
           }
         }
       }
@@ -283,6 +303,16 @@
         }
       }
     },
+    "Downloading": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando"
+          }
+        }
+      }
+    },
     "Filter": {
       "localizations": {
         "es": {
@@ -309,6 +339,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Obtener"
+          }
+        }
+      }
+    },
+    "Get %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener %@"
           }
         }
       }
@@ -403,6 +443,16 @@
         }
       }
     },
+    "Learning words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palabras en aprendizaje"
+          }
+        }
+      }
+    },
     "Level %@": {
       "localizations": {
         "es": {
@@ -429,6 +479,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Escuchar"
+          }
+        }
+      }
+    },
+    "Listen to %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchar %@"
           }
         }
       }
@@ -509,6 +569,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aún no tienes palabras. Mientras lees, toca una palabra y elige Aprender."
+          }
+        }
+      }
+    },
+    "Not available": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible"
           }
         }
       }
@@ -633,6 +703,16 @@
         }
       }
     },
+    "Review progress": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progreso del repaso"
+          }
+        }
+      }
+    },
     "Save words while you read.": {
       "localizations": {
         "es": {
@@ -719,6 +799,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tamaño de letra"
+          }
+        }
+      }
+    },
+    "That file is too large to import (10 MB maximum).": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese archivo es demasiado grande para importarlo (máximo 10 MB)."
           }
         }
       }
