@@ -1,0 +1,904 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld days in a row": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld day in a row"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld days in a row"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld día seguido"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld días seguidos"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld días seguidos"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld minutes a day": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld minutos al día"
+          }
+        }
+      }
+    },
+    "%lld of %lld min today": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld min hoy"
+          }
+        }
+      }
+    },
+    "%lld words to review": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld word to review"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld words to review"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld palabra por repasar"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld palabras por repasar"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld palabras por repasar"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de"
+          }
+        }
+      }
+    },
+    "Again": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otra vez"
+          }
+        }
+      }
+    },
+    "All done!": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Listo!"
+          }
+        }
+      }
+    },
+    "Already in your words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya está en tus palabras"
+          }
+        }
+      }
+    },
+    "Books: Project Gutenberg (public domain). Definitions: dictionaryapi.dev. No accounts, no ads, no tracking.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libros: Project Gutenberg (dominio público). Definiciones: dictionaryapi.dev. Sin cuentas, sin anuncios, sin rastreo."
+          }
+        }
+      }
+    },
+    "Continue reading": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar leyendo"
+          }
+        }
+      }
+    },
+    "Couldn't download “%@”. Try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo descargar “%@”. Intenta de nuevo."
+          }
+        }
+      }
+    },
+    "Couldn't import that file. Try a plain-text (.txt) English book.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo importar. Intenta con un libro en inglés en texto plano (.txt)."
+          }
+        }
+      }
+    },
+    "Couldn't load the catalog. Check your connection.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar el catálogo. Revisa tu conexión."
+          }
+        }
+      }
+    },
+    "Daily goal": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meta diaria"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
+          }
+        }
+      }
+    },
+    "Delete book?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar libro?"
+          }
+        }
+      }
+    },
+    "Delete word": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar palabra"
+          }
+        }
+      }
+    },
+    "Discover": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descubrir"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtro"
+          }
+        }
+      }
+    },
+    "Free public-domain classics from Project Gutenberg.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clásicos gratuitos de dominio público de Project Gutenberg."
+          }
+        }
+      }
+    },
+    "Get": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener"
+          }
+        }
+      }
+    },
+    "Get a book in Discover or import a .txt file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consigue un libro en Descubrir o importa un archivo .txt."
+          }
+        }
+      }
+    },
+    "I know it": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sé"
+          }
+        }
+      }
+    },
+    "Import a .txt file": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar un archivo .txt"
+          }
+        }
+      }
+    },
+    "In the text: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el texto: %@"
+          }
+        }
+      }
+    },
+    "In your library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En tu biblioteca"
+          }
+        }
+      }
+    },
+    "Larger text": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Letra más grande"
+          }
+        }
+      }
+    },
+    "Learn": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprender"
+          }
+        }
+      }
+    },
+    "Learned": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprendido"
+          }
+        }
+      }
+    },
+    "Learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprendiendo"
+          }
+        }
+      }
+    },
+    "Level %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nivel %@"
+          }
+        }
+      }
+    },
+    "Library": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biblioteca"
+          }
+        }
+      }
+    },
+    "Listen": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchar"
+          }
+        }
+      }
+    },
+    "Listen to the sentence": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchar la frase"
+          }
+        }
+      }
+    },
+    "Mark as learned": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar como aprendida"
+          }
+        }
+      }
+    },
+    "No books found. Try another title or author.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encontramos libros. Prueba con otro título o autor."
+          }
+        }
+      }
+    },
+    "No definition available.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin definición disponible."
+          }
+        }
+      }
+    },
+    "No learned words yet.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no tienes palabras aprendidas."
+          }
+        }
+      }
+    },
+    "No saved translation": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin traducción guardada"
+          }
+        }
+      }
+    },
+    "No words yet. While reading, tap a word and choose Learn.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no tienes palabras. Mientras lees, toca una palabra y elige Aprender."
+          }
+        }
+      }
+    },
+    "Nothing to review. Come back tomorrow!": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada pendiente. ¡Vuelve mañana!"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Read %lld minutes a day": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lee %lld minutos al día"
+          }
+        }
+      }
+    },
+    "Read aloud": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer en voz alta"
+          }
+        }
+      }
+    },
+    "Reading": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lectura"
+          }
+        }
+      }
+    },
+    "Reading progress": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progreso de lectura"
+          }
+        }
+      }
+    },
+    "Recommended for learners": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recomendados para aprender"
+          }
+        }
+      }
+    },
+    "Results": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resultados"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repaso"
+          }
+        }
+      }
+    },
+    "Review again": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volver a repasar"
+          }
+        }
+      }
+    },
+    "Review now": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repasar ahora"
+          }
+        }
+      }
+    },
+    "Save words while you read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda palabras mientras lees."
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        }
+      }
+    },
+    "Show meaning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar significado"
+          }
+        }
+      }
+    },
+    "Smaller text": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Letra más pequeña"
+          }
+        }
+      }
+    },
+    "Source code (open source, MIT)": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código fuente (open source, MIT)"
+          }
+        }
+      }
+    },
+    "Speech speed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velocidad de la voz"
+          }
+        }
+      }
+    },
+    "Stop reading": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener lectura"
+          }
+        }
+      }
+    },
+    "Test the voice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar la voz"
+          }
+        }
+      }
+    },
+    "Text size": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamaño de letra"
+          }
+        }
+      }
+    },
+    "This book is empty.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este libro está vacío."
+          }
+        }
+      }
+    },
+    "Title or author": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Título o autor"
+          }
+        }
+      }
+    },
+    "Today's goal done!": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Meta de hoy cumplida!"
+          }
+        }
+      }
+    },
+    "Translate to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducir al"
+          }
+        }
+      }
+    },
+    "Translation": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducción"
+          }
+        }
+      }
+    },
+    "Translation happens on your iPhone. The first time, iOS asks to download the language; after that it works offline.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La traducción ocurre en tu iPhone. La primera vez, iOS pide descargar el idioma; después funciona sin internet."
+          }
+        }
+      }
+    },
+    "Translation unavailable. Connect to the internet once to download the language.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducción no disponible. Conéctate a internet una vez para descargar el idioma."
+          }
+        }
+      }
+    },
+    "Unknown author": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autor desconocido"
+          }
+        }
+      }
+    },
+    "Voice": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voz"
+          }
+        }
+      }
+    },
+    "Words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palabras"
+          }
+        }
+      }
+    },
+    "You marked it as learned": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La marcaste como aprendida"
+          }
+        }
+      }
+    },
+    "You reviewed %lld words.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You reviewed %lld word."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You reviewed %lld words."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Repasaste %lld palabra."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Repasaste %lld palabras."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Repasaste %lld palabras."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Your books": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus libros"
+          }
+        }
+      }
+    },
+    "Your library is empty": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu biblioteca está vacía"
+          }
+        }
+      }
+    },
+    "“%@” added to your library.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” se agregó a tu biblioteca."
+          }
+        }
+      }
+    },
+    "“%@” is in your library.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” está en tu biblioteca."
+          }
+        }
+      }
+    },
+    "“%@” will be removed from your library. Your saved words stay.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” se quitará de tu biblioteca. Tus palabras guardadas se conservan."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
