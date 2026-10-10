@@ -41,8 +41,10 @@ public struct GutenbergBook: Decodable, Identifiable, Hashable, Sendable {
     /// Short title for lists: catalog titles carry subtitles and MARC markers
     /// ("Peter Pan : $b [Peter and Wendy]", "Moby-Dick; Or, The Whale").
     public var displayTitle: String {
-        var short = title
-        for separator in [" : ", ";", "$b", "\n", "\r"] {
+        // Split on newlines first: Swift treats "\r\n" as one Character, which a
+        // plain "\n" search would not find.
+        var short = title.components(separatedBy: .newlines).first ?? title
+        for separator in [" : ", ";", "$b"] {
             if let range = short.range(of: separator) { short = String(short[..<range.lowerBound]) }
         }
         let trimmed = short.trimmingCharacters(in: .whitespaces)
