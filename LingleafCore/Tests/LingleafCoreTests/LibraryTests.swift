@@ -108,6 +108,73 @@ final class LibraryTests: XCTestCase {
         XCTAssertTrue(library.state.words.isEmpty)
     }
 
+    func testSaveWordReturnsThePreviousRecordAndRestoreWordPutsItBack() {
+        let library = library()
+        XCTAssertNil(library.saveWord("Beach", learned: false, translation: "playa", translationLanguage: "es"), "a new word")
+        library.restoreWord("Beach", previous: nil)
+        XCTAssertNil(library.state.word("beach"), "undo of a new word removes it")
+
+        library.saveWord("beach", learned: false, translation: "playa", translationLanguage: "es", context: "On the beach.")
+        let learning = library.state.word("beach")
+        now = now.addingTimeInterval(60)
+        let previous = library.saveWord("beach", learned: true)
+        XCTAssertEqual(previous, learning)
+        XCTAssertEqual(library.state.word("beach")?.learned, true)
+        library.restoreWord("beach", previous: previous)
+        XCTAssertEqual(library.state.word("beach"), learning, "undo restores exactly the previous record")
+        XCTAssertEqual(self.library().state.word("beach"), learning, "and persists it")
+
+        library.deleteWord("beach")
+        library.restoreWord("beach", previous: learning)
+        XCTAssertEqual(library.state.word("beach"), learning, "undo of a delete")
+    }
+
+    func testSaveWordRecordsTheTranslationLanguage() {
+        let library = library()
+        library.saveWord("sea", learned: false, translation: "mar", translationLanguage: "es")
+        XCTAssertEqual(library.state.word("sea")?.translationLanguage, "es")
+        library.saveWord("sea", learned: false, translation: nil, translationLanguage: "pt")
+        XCTAssertEqual(library.state.word("sea")?.translationLanguage, "es", "no translation, no change")
+        library.saveWord("sea", learned: false, translation: "mar", translationLanguage: "pt")
+        XCTAssertEqual(library.state.word("sea")?.translationLanguage, "pt")
+    }
+
+    func testSetTranslationFillsAMissingOrOtherLanguageTranslation() {
+        let library = library()
+        library.setTranslation("missing", "x", language: "es")
+        XCTAssertTrue(library.state.words.isEmpty, "no-op when the word doesn't exist")
+
+        library.saveWord("Dog", learned: false)
+        library.setTranslation("dog", "", language: "es")
+        XCTAssertEqual(library.state.word("dog")?.translation, "", "blank text is ignored")
+        library.setTranslation("Dog", "perro", language: "es")
+        XCTAssertEqual(library.state.word("dog")?.translation, "perro")
+        XCTAssertEqual(library.state.word("dog")?.translationLanguage, "es")
+        library.setTranslation("dog", "can", language: "es")
+        XCTAssertEqual(library.state.word("dog")?.translation, "perro", "no-op when already translated in that language")
+        library.setTranslation("dog", "cachorro", language: "pt")
+        XCTAssertEqual(library.state.word("dog")?.translation, "cachorro", "another language replaces it")
+        XCTAssertEqual(self.library().state.word("dog")?.translationLanguage, "pt")
+    }
+
+    func testWordsNeedingTranslation() {
+        let library = library()
+        library.saveWord("one", learned: false)
+        library.saveWord("two", learned: false, translation: "dos", translationLanguage: "es")
+        library.saveWord("three", learned: true, translation: "três", translationLanguage: "pt")
+        library.saveWord("four", learned: false, translation: "cuatro")
+        XCTAssertEqual(Set(library.wordsNeedingTranslation("es").map(\.word)), ["one", "three", "four"])
+        XCTAssertEqual(Set(library.wordsNeedingTranslation("pt").map(\.word)), ["one", "two", "four"])
+    }
+
+    func testWordsSavedBeforeTranslationLanguageDecode() throws {
+        storage.files["words.json"] = #"[{"word": "cat", "translation": "gato", "phonetic": "", "context": "", "source": "", "#
+            + #""learned": false, "box": 0, "createdAt": "2026-10-01T09:00:00Z", "nextReview": "2026-10-01T09:00:00Z"}]"#
+        let word = try XCTUnwrap(library().state.word("cat"))
+        XCTAssertEqual(word.translation, "gato")
+        XCTAssertNil(word.translationLanguage)
+    }
+
     func testReadingTimeFeedsTodayAndTheStreak() {
         let library = library()
         library.addReadingTime(240)
