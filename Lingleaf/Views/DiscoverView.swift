@@ -32,10 +32,12 @@ struct DiscoverView: View {
                     } else {
                         ForEach(results ?? recommended) { row($0) }
                     }
+                    // A row rather than a section footer, which would not scale with Dynamic Type.
+                    Text("Free public-domain classics from Project Gutenberg.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.secondaryText)
                 } header: {
                     Text(results == nil ? "Recommended for learners" : "Results").foregroundStyle(Brand.secondaryText)
-                } footer: {
-                    Text("Free public-domain classics from Project Gutenberg.").foregroundStyle(Brand.secondaryText)
                 }
             }
             .navigationTitle("Discover")

@@ -65,7 +65,7 @@ final class AppModel {
     }
 
     /// A small Gutendex answer so Discover has books to show in UI tests.
-    private static let fakeCatalog = #"""
+    nonisolated private static let fakeCatalog = #"""
     {"results": [
       {"id": 21, "title": "Aesop's Fables", "authors": [{"name": "Aesop"}],
        "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/21.txt.utf-8"}},
