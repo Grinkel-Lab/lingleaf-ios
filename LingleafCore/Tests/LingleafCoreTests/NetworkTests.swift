@@ -27,6 +27,19 @@ final class GutenbergTests: XCTestCase {
         XCTAssertEqual(GutenbergClient.stripBoilerplate("  Just a story.\n"), "Just a story.")
     }
 
+    func testCatalogTitlesAndAuthorsAreShortenedForDisplay() {
+        func book(_ title: String, _ author: String) -> GutenbergBook {
+            GutenbergBook(id: 1, title: title, authors: [.init(name: author)])
+        }
+        XCTAssertEqual(book("Peter Pan : $b [Peter and Wendy]", "x").displayTitle, "Peter Pan")
+        XCTAssertEqual(book("Moby-Dick; Or, The Whale", "x").displayTitle, "Moby-Dick")
+        XCTAssertEqual(book("Frankenstein\r\nOr, The Modern Prometheus", "x").displayTitle, "Frankenstein")
+        XCTAssertEqual(book("Treasure Island", "x").displayTitle, "Treasure Island")
+        XCTAssertEqual(book("x", "Baum, L. Frank (Lyman Frank)").authorName, "L. Frank Baum")
+        XCTAssertEqual(book("x", "Barrie, J. M. (James Matthew)").authorName, "J. M. Barrie")
+        XCTAssertEqual(book("x", "Aesop").authorName, "Aesop")
+    }
+
     func testRecommendedBooksParseAndKeepCuratedOrder() async throws {
         let alice = alice
         let client = GutenbergClient(http: ClosureFetcher { url in

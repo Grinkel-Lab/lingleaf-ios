@@ -110,14 +110,14 @@ struct DiscoverView: View {
             AsyncImage(url: book.coverURL) { image in
                 image.resizable().scaledToFill()
             } placeholder: {
-                BookCover(title: book.title)
+                BookCover(title: book.displayTitle)
             }
             .frame(width: 44, height: 62)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(book.title).font(.headline)
+                Text(book.displayTitle).font(.headline)
                 HStack(spacing: 6) {
                     if let level = GutenbergClient.level(for: book.id) { LevelBadge(level: level) }
                     Text(book.authorName ?? String(localized: "Unknown author"))
@@ -161,15 +161,15 @@ struct DiscoverView: View {
         do {
             let text = try await model.gutenberg.downloadText(book)
             model.library.addBook(
-                title: book.title,
+                title: book.displayTitle,
                 author: book.authorName ?? String(localized: "Unknown author"),
                 text: text,
                 level: GutenbergClient.level(for: book.id),
                 gutenbergID: book.id
             )
-            message = String(localized: "“\(book.title)” is in your library.")
+            message = String(localized: "“\(book.displayTitle)” is in your library.")
         } catch {
-            message = String(localized: "Couldn't download “\(book.title)”. Try again.")
+            message = String(localized: "Couldn't download “\(book.displayTitle)”. Try again.")
         }
     }
 }

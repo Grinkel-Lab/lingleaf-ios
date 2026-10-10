@@ -30,9 +30,23 @@ public struct GutenbergBook: Decodable, Identifiable, Hashable, Sendable {
 
     /// "Carroll, Lewis" → "Lewis Carroll"
     public var authorName: String? {
-        guard let name = authors.first?.name else { return nil }
+        guard let raw = authors.first?.name else { return nil }
+        // "Baum, L. Frank (Lyman Frank)" → "Baum, L. Frank": drop the catalog's full-name note.
+        let name = raw.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
         let parts = name.split(separator: ",", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
         return parts.count == 2 ? "\(parts[1]) \(parts[0])" : name
+    }
+
+    /// Short title for lists: catalog titles carry subtitles and MARC markers
+    /// ("Peter Pan : $b [Peter and Wendy]", "Moby-Dick; Or, The Whale").
+    public var displayTitle: String {
+        var short = title
+        for separator in [" : ", ";", "$b", "\n", "\r"] {
+            if let range = short.range(of: separator) { short = String(short[..<range.lowerBound]) }
+        }
+        let trimmed = short.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? title.trimmingCharacters(in: .whitespaces) : trimmed
     }
 
     public var coverURL: URL? { formats["image/jpeg"].flatMap(URL.init(string:)) }
