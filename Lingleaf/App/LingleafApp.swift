@@ -72,7 +72,9 @@ final class AppModel {
       {"id": 55, "title": "The Wonderful Wizard of Oz", "authors": [{"name": "Baum, L. Frank"}],
        "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/55.txt.utf-8"}},
       {"id": 16, "title": "Peter Pan", "authors": [{"name": "Barrie, J. M."}],
-       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/16.txt.utf-8"}}
+       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/16.txt.utf-8"}},
+      {"id": 2701, "title": "Moby-Dick; Or, The Whale", "authors": [{"name": "Melville, Herman"}],
+       "formats": {"text/plain; charset=us-ascii": "https://www.gutenberg.org/ebooks/2701.txt.utf-8"}}
     ]}
     """#
 

@@ -46,6 +46,17 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["All done!"].waitForExistence(timeout: 5))
     }
 
+    func testFilterRecommendedBooksByLevel() {
+        app.tabBars.buttons["Discover"].tap()
+        let b1 = app.buttons["level-filter-B1"]
+        XCTAssertTrue(b1.waitForExistence(timeout: 10), "the level chips show above the recommended books")
+        b1.tap()
+        XCTAssertTrue(app.staticTexts["Peter Pan"].waitForExistence(timeout: 5), "B1 books stay")
+        XCTAssertTrue(app.staticTexts["Aesop's Fables"].waitForNonExistence(timeout: 5), "the A2 book is filtered out")
+        app.buttons["level-filter-all"].tap()
+        XCTAssertTrue(app.staticTexts["Aesop's Fables"].waitForExistence(timeout: 5), "All shows every book again")
+    }
+
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
     /// hit areas…) on every main screen. Collects every issue before failing,
     /// so one CI run shows the whole list.

@@ -42,6 +42,33 @@ final class GutenbergTests: XCTestCase {
         XCTAssertEqual(GutenbergClient.level(for: 11), "B2")
     }
 
+    func testRecommendedRequestsEveryCuratedID() async throws {
+        let recorder = Recorder()
+        let client = GutenbergClient(http: ClosureFetcher { url in
+            await recorder.add(url)
+            return ok(#"{"results": []}"#)
+        })
+        _ = try await client.fetchRecommended()
+        let urls = await recorder.urls
+        let ids = GutenbergClient.recommended.map { String($0.id) }.joined(separator: ",")
+        XCTAssertEqual(urls, ["https://gutendex.com/books?ids=\(ids)"])
+        XCTAssertLessThanOrEqual(GutenbergClient.recommended.count, 32, "Gutendex returns 32 books per page")
+    }
+
+    func testFilterKeepsBooksAtTheChosenLevelInOrder() {
+        let books = GutenbergClient.recommended.map { GutenbergBook(id: $0.id, title: "Book \($0.id)") }
+        XCTAssertEqual(GutenbergClient.filter(books, level: nil), books)
+        XCTAssertEqual(GutenbergClient.filter(books, level: "B1").map(\.id), [55, 16, 236])
+        XCTAssertEqual(GutenbergClient.filter(books, level: "A1"), [])
+        XCTAssertEqual(GutenbergClient.filter([GutenbergBook(id: 999_999, title: "Unlisted")], level: "B1"), [])
+    }
+
+    func testEveryRecommendedLevelIsAKnownLevel() {
+        for book in GutenbergClient.recommended {
+            XCTAssertTrue(GutenbergClient.levels.contains(book.level), "\(book.id) has unknown level \(book.level)")
+        }
+    }
+
     func testSearchEncodesTheQueryAndErrorsOnBadStatus() async throws {
         let client = GutenbergClient(http: ClosureFetcher { url in
             url.contains("search=tom%20sawyer") ? ok(#"{"results": []}"#) : HttpResponse(status: 500, text: "")

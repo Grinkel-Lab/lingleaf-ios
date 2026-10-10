@@ -68,9 +68,12 @@ final class ScreenTour: XCTestCase {
         }
 
         tab(1)
+        _ = app.buttons["level-filter-all"].waitForExistence(timeout: 10)
         snap("08-discover")
+        app.buttons["level-filter-B1"].tap()
+        snap("09-discover-level-filter")
         tab(3)
-        snap("09-settings")
+        snap("10-settings")
         app.terminate()
     }
 
