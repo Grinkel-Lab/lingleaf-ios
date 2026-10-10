@@ -163,16 +163,6 @@
         }
       }
     },
-    "Already in your words": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ya está en tus palabras"
-          }
-        }
-      }
-    },
     "Ask me when I tap a word": {
       "localizations": {
         "es": {
@@ -358,7 +348,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "La sé"
+            "value": "Ya la sé"
           }
         }
       }
@@ -399,16 +389,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Letra más grande"
-          }
-        }
-      }
-    },
-    "Learn": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aprender"
           }
         }
       }
@@ -499,6 +479,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marcar como aprendida"
+          }
+        }
+      }
+    },
+    "More languages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más idiomas"
           }
         }
       }
@@ -693,12 +683,32 @@
         }
       }
     },
+    "Save word": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar palabra"
+          }
+        }
+      }
+    },
     "Save words while you read.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Guarda palabras mientras lees."
+          }
+        }
+      }
+    },
+    "Saved": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardada"
           }
         }
       }
@@ -833,6 +843,16 @@
         }
       }
     },
+    "Translate into:": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducir a:"
+          }
+        }
+      }
+    },
     "Translation": {
       "localizations": {
         "es": {
@@ -863,6 +883,16 @@
         }
       }
     },
+    "Undo": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer"
+          }
+        }
+      }
+    },
     "Unknown author": {
       "localizations": {
         "es": {
@@ -889,16 +919,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Palabras"
-          }
-        }
-      }
-    },
-    "You marked it as learned": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La marcaste como aprendida"
           }
         }
       }
@@ -985,6 +1005,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@” está en tu biblioteca."
+          }
+        }
+      }
+    },
+    "“%@” marked as known": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» marcada como conocida"
+          }
+        }
+      }
+    },
+    "“%@” removed from Words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» quitada de Palabras"
+          }
+        }
+      }
+    },
+    "“%@” saved to Words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» guardada en Palabras"
           }
         }
       }
