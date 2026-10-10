@@ -14,13 +14,14 @@ struct LingleafApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                #if DEBUG
+                .overlay(alignment: .topLeading) { LastSpokenProbe() }
+                #endif
+                // After the overlay, so the probe reads the model from the environment too.
                 .environment(model)
                 .tint(Brand.ink)
                 // Lets UI tests and the screenshot tour render dark mode on any simulator.
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("-dark-mode") ? .dark : nil)
-                #if DEBUG
-                .overlay(alignment: .topLeading) { LastSpokenProbe() }
-                #endif
         }
     }
 }
