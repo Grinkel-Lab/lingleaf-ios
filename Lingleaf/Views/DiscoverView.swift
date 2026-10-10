@@ -45,13 +45,15 @@ struct DiscoverView: View {
                     } else {
                         ForEach(books) { row($0) }
                     }
-                    // A row rather than a section footer, which would not scale with Dynamic Type.
-                    Text("Free public-domain classics from Project Gutenberg.")
-                        .font(.footnote)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .foregroundStyle(Brand.secondaryText)
                 } header: {
                     Text(results == nil ? "Recommended for learners" : "Results").foregroundStyle(Brand.secondaryText)
+                }
+                // Its own section, like the note in Settings: as a footer, or as a row
+                // among the books, it did not scale with Dynamic Type in the audit.
+                Section {
+                    Text("Free public-domain classics from Project Gutenberg.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.secondaryText)
                 }
             }
             .navigationTitle("Discover")
