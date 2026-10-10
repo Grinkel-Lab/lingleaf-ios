@@ -2,8 +2,9 @@ import Accessibility
 import SwiftUI
 
 /// A short message at the bottom of the screen with an Undo button, e.g.
-/// "“beach” saved to Words". It disappears after `seconds` (twice as long with
-/// VoiceOver on) and is announced to VoiceOver.
+/// "“beach” saved to Words". It is announced to VoiceOver and disappears after
+/// `seconds`; with VoiceOver or Switch Control on it stays until Undo is tapped or
+/// a newer message replaces it.
 struct UndoMessage: Identifiable, Equatable {
     let id = UUID()
     let text: String
@@ -23,6 +24,12 @@ extension View {
 private struct UndoMessageModifier: ViewModifier {
     @Binding var message: UndoMessage?
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
+    @Environment(\.accessibilitySwitchControlEnabled) private var switchControl
+
+    /// Assistive tech that may need more time to reach Undo: the message doesn't time out.
+    private var staysOpen: Bool {
+        voiceOver || switchControl || UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning
+    }
 
     func body(content: Content) -> some View {
         content
@@ -42,12 +49,20 @@ private struct UndoMessageModifier: ViewModifier {
                 // High priority: not cut off by VoiceOver moving focus as a sheet closes.
                 announcement.accessibilitySpeechAnnouncementPriority = .high
                 AccessibilityNotification.Announcement(announcement).post()
-                let seconds = voiceOver ? current.seconds * 2 : current.seconds
-                try? await Task.sleep(for: .seconds(seconds))
+            }
+            // Restarts when assistive tech is turned on or off while the message shows.
+            .task(id: Timeout(id: message?.id, staysOpen: staysOpen)) {
+                guard let current = message, !staysOpen else { return }
+                try? await Task.sleep(for: .seconds(current.seconds))
                 // A newer message (or Undo) cancels this task; only time out this one.
                 if !Task.isCancelled, message?.id == current.id { message = nil }
             }
     }
+}
+
+private struct Timeout: Equatable {
+    let id: UUID?
+    let staysOpen: Bool
 }
 
 /// Inverted colours (label on background), so text and button keep the system's

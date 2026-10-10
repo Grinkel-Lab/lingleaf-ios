@@ -653,6 +653,16 @@
         }
       }
     },
+    "Remove from Words": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de Palabras"
+          }
+        }
+      }
+    },
     "Results": {
       "localizations": {
         "es": {
@@ -899,6 +909,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La traducción ocurre en tu iPhone. La primera vez, iOS pide descargar el idioma; después funciona sin internet."
+          }
+        }
+      }
+    },
+    "Translation language: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma de la traducción: %@"
           }
         }
       }

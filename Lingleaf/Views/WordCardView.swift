@@ -134,8 +134,8 @@ struct WordCardView: View {
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("Translate into"))
-        .accessibilityValue(Text(AppModel.languageLabel(current)))
+        // The language name keeps its own language so VoiceOver reads it with the right voice.
+        .accessibilityLabel(Text("Translation language: \(AppModel.languageLabel(current))"))
     }
 
     /// Shown where the translation goes while no language is set; the rest of the card works meanwhile.
@@ -234,7 +234,8 @@ struct WordCardView: View {
     }
 
     /// Primary: the yellow marker that underlines saved words, black text. Secondary:
-    /// a neutral tonal button. A checked button shows ✓ and has the selected trait.
+    /// a neutral tonal button. A checked button shows ✓, has the selected trait and
+    /// a hint saying that tapping it removes the word.
     private func actionButton(
         _ title: LocalizedStringKey, checked: Bool, primary: Bool, action: @escaping () -> Void
     ) -> some View {
@@ -259,6 +260,7 @@ struct WordCardView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(checked ? .isSelected : [])
+        .accessibilityHint(checked ? Text("Remove from Words") : Text(verbatim: ""))
     }
 
     private func save(learned: Bool) {

@@ -21,7 +21,7 @@ final class LingleafUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["ES: beach"].waitForExistence(timeout: 10), "the card shows the translation")
         XCTAssertTrue(app.staticTexts["/test/"].exists, "the card shows the IPA")
-        XCTAssertTrue(app.buttons["Translate into"].exists, "the language button sits under the translation")
+        XCTAssertTrue(app.buttons["Translation language: Español"].exists, "the language button sits under the translation")
         app.buttons["Save word"].tap()
         XCTAssertTrue(app.staticTexts["“beach” saved to Words"].waitForExistence(timeout: 5), "the reader confirms the save")
 
@@ -263,7 +263,7 @@ final class LingleafUITests: XCTestCase {
         app.buttons["Español"].tap()
         XCTAssertTrue(app.staticTexts["ES: beach"].waitForExistence(timeout: 10), "the translation appears on the same card")
         XCTAssertFalse(app.staticTexts["Translate into:"].exists, "the question is gone")
-        XCTAssertTrue(app.buttons["Translate into"].exists, "a button to change the language replaces it")
+        XCTAssertTrue(app.buttons["Translation language: Español"].exists, "a button to change the language replaces it")
     }
 
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
