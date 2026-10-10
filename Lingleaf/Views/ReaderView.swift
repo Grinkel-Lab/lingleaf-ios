@@ -163,7 +163,8 @@ struct ReaderView: View {
               let index = items.first(where: { $0.name == "p" })?.value.flatMap(Int.init),
               let start = items.first(where: { $0.name == "o" })?.value.flatMap(Int.init),
               let end = items.first(where: { $0.name == "e" })?.value.flatMap(Int.init),
-              let paragraphs, paragraphs.indices.contains(index)
+              let paragraphs, paragraphs.indices.contains(index),
+              0 <= start, start < end, end <= (paragraphs[index] as NSString).length
         else { return }
         let paragraph = paragraphs[index]
         selection = WordSelection(

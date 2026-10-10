@@ -693,6 +693,16 @@
         }
       }
     },
+    "That file is too large to import (10 MB maximum).": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese archivo es demasiado grande para importarlo (máximo 10 MB)."
+          }
+        }
+      }
+    },
     "This book is empty.": {
       "localizations": {
         "es": {

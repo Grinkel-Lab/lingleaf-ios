@@ -28,6 +28,13 @@ final class LibraryTests: XCTestCase {
         return library
     }
 
+    func testKeepsACopyOfAFileThatCannotBeRead() {
+        storage.files["words.json"] = "not json"
+        let library = library()
+        XCTAssertTrue(library.state.words.isEmpty)
+        XCTAssertEqual(storage.files["words.json.corrupt"], "not json")
+    }
+
     func testSeedsBundledStoriesOnce() {
         let library = library()
         library.seedIfNeeded { stories }

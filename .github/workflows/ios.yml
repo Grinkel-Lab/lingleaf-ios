@@ -79,17 +79,23 @@ jobs:
   screenshots:
     name: Publish screenshots
     needs: app
-    if: always() && github.event.pull_request.head.repo.fork != true
+    # Not for forks or Dependabot, whose tokens can't write to the repository.
+    if: always() && github.event.pull_request.head.repo.fork != true && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: ios-screenshots
           path: screenshots
-      - run: ./.github/scripts/publish-screenshots.sh ios "${{ github.head_ref || github.ref_name }}" "${{ github.event.pull_request.head.sha || github.sha }}"
+      # Values go through env, never interpolated into the script (branch names are untrusted).
+      - run: ./.github/scripts/publish-screenshots.sh ios "$BRANCH" "$COMMIT"
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}

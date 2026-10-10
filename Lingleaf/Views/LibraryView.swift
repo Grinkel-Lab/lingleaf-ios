@@ -63,6 +63,11 @@ struct LibraryView: View {
             let url = try result.get()
             let access = url.startAccessingSecurityScopedResource()
             defer { if access { url.stopAccessingSecurityScopedResource() } }
+            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            guard size <= Limits.maxBytes else {
+                message = String(localized: "That file is too large to import (10 MB maximum).")
+                return
+            }
             let data = try Data(contentsOf: url)
             let raw = String(decoding: data, as: UTF8.self)
             let text = GutenbergClient.stripBoilerplate(raw)

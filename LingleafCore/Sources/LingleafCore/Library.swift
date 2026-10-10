@@ -276,9 +276,15 @@ public final class Library {
         storage.write(name, String(decoding: data, as: UTF8.self))
     }
 
+    /// A file that exists but can't be read is kept as `<name>.corrupt` before the
+    /// next save replaces it, so a damaged library or word list can be recovered.
     private func decode<T: Decodable>(_ type: T.Type, _ name: String) -> T? {
         guard let text = storage.read(name) else { return nil }
-        return try? decoder.decode(type, from: Data(text.utf8))
+        guard let value = try? decoder.decode(type, from: Data(text.utf8)) else {
+            storage.write("\(name).corrupt", text)
+            return nil
+        }
+        return value
     }
 }
 

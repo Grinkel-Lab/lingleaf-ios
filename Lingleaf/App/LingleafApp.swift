@@ -43,7 +43,11 @@ final class AppModel {
     }
 
     static func make() -> AppModel {
-        ProcessInfo.processInfo.arguments.contains("-ui-testing") ? uiTesting() : live()
+        #if DEBUG
+        // UI tests only: release builds never take the offline, fake-data path.
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing") { return uiTesting() }
+        #endif
+        return live()
     }
 
     private static func live() -> AppModel {
