@@ -239,7 +239,7 @@ public final class Library {
             entry.nextReview = now()
         }
         entry.learned = learned
-        if let translation, !translation.isEmpty {
+        if let translation, !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             entry.translation = translation
             entry.translationLanguage = translationLanguage
         }

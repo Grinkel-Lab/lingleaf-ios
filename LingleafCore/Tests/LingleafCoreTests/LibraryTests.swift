@@ -75,7 +75,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertFalse(library.isLearning("equal"))
         XCTAssertEqual(library.dueWords().map(\.word), ["animal"])
 
-        library.saveWord("animal", learned: true, translation: "")
+        library.saveWord("animal", learned: true, translation: " ")
         XCTAssertFalse(library.isLearning("animals"))
         let saved = self.library().state.word("animal")
         XCTAssertEqual(saved?.learned, true)

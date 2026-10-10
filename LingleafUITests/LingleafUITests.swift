@@ -130,6 +130,29 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "the word is saved offline")
     }
 
+    /// S12: a word saved offline has no translation yet; Review says so when the meaning is shown.
+    func testReviewSaysWhenAWordHasNoTranslationYet() {
+        app.terminate()
+        app.launchArguments = ["-ui-testing-offline", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+
+        button(startingWith: "The Red Boat").tap()
+        let word = app.links["beach"].firstMatch
+        XCTAssertTrue(word.waitForExistence(timeout: 10))
+        word.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForNonExistence(timeout: 10))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.tabBars.buttons["Words"].tap()
+        button(startingWith: "Review now").tap()
+        XCTAssertTrue(app.buttons["Show meaning"].waitForExistence(timeout: 5))
+        app.buttons["Show meaning"].tap()
+        let noTranslation = app.staticTexts["No translation yet. Connect to the internet once to get it."]
+        XCTAssertTrue(noTranslation.waitForExistence(timeout: 5), "Review says the translation is missing")
+    }
+
     /// S4/S15: Undo after Save word takes the word out again; Undo after changing a
     /// saved word puts back the previous record.
     func testUndoAfterSaveWordRestoresTheWord() {
