@@ -17,7 +17,10 @@ jobs:
   upload:
     name: Archive and upload
     runs-on: macos-15
-    # Secrets live in this environment so they can require approval and stay off pull requests.
+    # Only from main: a workflow edited on another branch never gets the signing key.
+    if: github.ref == 'refs/heads/main'
+    # The environment holds the secrets, requires the maintainer's approval and only
+    # deploys from main (docs/testflight.md).
     environment: testflight
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -37,10 +40,17 @@ jobs:
         with:
           persist-credentials: false
 
+      # Pinned and checksum-verified: this job later holds the signing key.
       - name: Generate the Xcode project
+        env:
+          XCODEGEN_VERSION: "2.42.0"
+          XCODEGEN_SHA256: "a760b4bf97460341316a2c00d8c87b2946c6c2729eb57e9a72abb3ef7bc0ef82"
         run: |
-          brew install xcodegen
-          xcodegen generate
+          curl -fsSL -o "$RUNNER_TEMP/xcodegen.zip" \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+          echo "$XCODEGEN_SHA256  $RUNNER_TEMP/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate
 
       - name: Write the API key
         env:

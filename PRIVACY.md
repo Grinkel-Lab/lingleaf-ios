@@ -15,7 +15,7 @@ on your device. Your operating system may include them in your device or cloud b
 ## What the app sends over the internet
 
 The app connects only to these services, always over HTTPS, and sends no identifier
-of you or your device:
+of you or your device (like any website, they see your IP address):
 
 - **Project Gutenberg** (`gutendex.com`, `gutenberg.org`): to list, search and
   download free books. They receive your search terms and the books you download.
