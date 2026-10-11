@@ -11,8 +11,10 @@ It runs only by hand (Actions → TestFlight → Run workflow), normally on `mai
    primary language English, bundle ID `app.lingleaf` (register it if it isn't listed),
    SKU `lingleaf-ios`.
 3. **App Store Connect → Users and Access → Integrations → App Store Connect API**:
-   generate a team key with the **App Manager** role (the least role that can sign with
-   cloud-managed certificates and upload; never Admin). Download the `.p8` file (only once)
+   generate a team key with the **Admin** role: Apple only lets Admin keys create the
+   cloud-managed distribution certificate (App Manager fails with "Cloud signing permission
+   error"). The `testflight` environment limits its use to `main`, with your approval
+   every time. Download the `.p8` file (only once)
    and note the **Key ID** and **Issuer ID**. If the key leaks or is no longer needed,
    **revoke** it on the same page and replace the `ASC_KEY_P8` / `ASC_KEY_ID` secrets.
 4. **Team ID**: developer.apple.com → Account → Membership details.
