@@ -64,20 +64,17 @@ jobs:
           printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
           chmod 600 "$RUNNER_TEMP/asc/AuthKey.p8"
 
-      # Signs for distribution: the default development identity needs a registered
-      # device, and the team has none (nor needs one) to upload to TestFlight.
-      - name: Archive (Release, signed by Xcode with the API key)
+      # Archived unsigned and signed for distribution at export: automatic signing
+      # archives with a development profile, which needs a registered device, and
+      # the team has none (nor needs one) to upload to TestFlight.
+      - name: Archive (Release, unsigned)
         run: |
           xcodebuild archive \
             -project Lingleaf.xcodeproj -scheme Lingleaf -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/Lingleaf.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
 
       - name: Upload to App Store Connect
