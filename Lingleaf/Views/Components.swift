@@ -67,6 +67,10 @@ struct ContentView: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        // Inside `.environment(model)` (applied by LingleafApp), which the worker reads.
+        .modifier(TranslationWorker())
+        // Words saved offline or before a language was chosen get their translation.
+        .task { model.translateMissing() }
     }
 }
 
@@ -160,5 +164,60 @@ struct DailyGoalCard: View {
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Lays its children out in rows, wrapping to a new row when one is full; rows are centred.
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        let rows = layoutRows(of: subviews, width: width)
+        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(rows.count - 1, 0))
+        let widest = rows.map(\.width).max() ?? 0
+        return CGSize(width: proposal.width ?? widest, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in layoutRows(of: subviews, width: bounds.width) {
+            var x = bounds.minX + max(0, (bounds.width - row.width) / 2)
+            for (index, size) in zip(row.indices, row.sizes) {
+                subviews[index].place(
+                    at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
+                    proposal: ProposedViewSize(size)
+                )
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var sizes: [CGSize] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func layoutRows(of subviews: Subviews, width: CGFloat) -> [Row] {
+        // A child wider than the row (very large text) is offered the row's width and wraps.
+        let childProposal = ProposedViewSize(width: width.isFinite ? width : nil, height: nil)
+        var rows: [Row] = []
+        var current = Row()
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(childProposal)
+            if !current.indices.isEmpty, current.width + spacing + size.width > width {
+                rows.append(current)
+                current = Row()
+            }
+            current.width += current.indices.isEmpty ? size.width : spacing + size.width
+            current.height = max(current.height, size.height)
+            current.indices.append(index)
+            current.sizes.append(size)
+        }
+        if !current.indices.isEmpty { rows.append(current) }
+        return rows
     }
 }

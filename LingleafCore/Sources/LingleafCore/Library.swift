@@ -22,6 +22,8 @@ public struct Book: Codable, Identifiable, Hashable, Sendable {
 public struct VocabWord: Codable, Identifiable, Hashable, Sendable {
     public let word: String
     public var translation: String
+    /// Language `translation` is in ("es", "zh-Hans"); nil when unknown (older data).
+    public var translationLanguage: String?
     public var phonetic: String
     public var context: String
     public var source: String
@@ -218,14 +220,18 @@ public final class Library {
         return !learning.isEmpty && !TextTools.matchKeys(token).isDisjoint(with: learning)
     }
 
+    /// Saves the word as being learned or as known and returns the record it
+    /// replaced (nil when the word was new), so the change can be undone with
+    /// `restoreWord`. A blank translation, phonetic, context or source keeps the saved one.
+    @discardableResult
     public func saveWord(
-        _ word: String, learned: Bool, translation: String? = nil, phonetic: String? = nil,
-        context: String = "", source: String = ""
-    ) {
+        _ word: String, learned: Bool, translation: String? = nil, translationLanguage: String? = nil,
+        phonetic: String? = nil, context: String = "", source: String = ""
+    ) -> VocabWord? {
         let key = TextTools.normalize(word)
         let existing = state.words.first { $0.word == key }
         var entry = existing ?? VocabWord(
-            word: key, translation: "", phonetic: "", context: "", source: "",
+            word: key, translation: "", translationLanguage: nil, phonetic: "", context: "", source: "",
             learned: learned, box: 0, createdAt: now(), nextReview: now()
         )
         if !learned, existing == nil || existing?.learned == true {
@@ -233,11 +239,43 @@ public final class Library {
             entry.nextReview = now()
         }
         entry.learned = learned
-        if let translation, !translation.isEmpty { entry.translation = translation }
+        if let translation, !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            entry.translation = translation
+            entry.translationLanguage = translationLanguage
+        }
         if let phonetic, !phonetic.isEmpty { entry.phonetic = phonetic }
         if !context.isEmpty { entry.context = context }
         if !source.isEmpty { entry.source = source }
         replace(entry)
+        return existing
+    }
+
+    /// Undo: puts back exactly `previous` (what `saveWord` returned, or the word
+    /// before it was deleted); nil removes the word.
+    public func restoreWord(_ word: String, previous: VocabWord?) {
+        if let previous {
+            replace(previous)
+        } else {
+            deleteWord(TextTools.normalize(word))
+        }
+    }
+
+    /// Records a translation that arrived after the word was saved. Does nothing
+    /// when the word no longer exists, the text is blank, or the word already has
+    /// a translation in that language.
+    public func setTranslation(_ word: String, _ text: String, language: String) {
+        let key = TextTools.normalize(word)
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, var entry = state.words.first(where: { $0.word == key }),
+              entry.translation.isEmpty || entry.translationLanguage != language else { return }
+        entry.translation = text
+        entry.translationLanguage = language
+        replace(entry)
+    }
+
+    /// Words to translate into `target`: no translation yet, or one recorded in
+    /// another language (or in an unknown one).
+    public func wordsNeedingTranslation(_ target: String) -> [VocabWord] {
+        state.words.filter { $0.translation.isEmpty || $0.translationLanguage != target }
     }
 
     public func answerReview(_ word: String, correct: Bool) {

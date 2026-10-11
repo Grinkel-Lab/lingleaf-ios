@@ -12,7 +12,7 @@ final class LingleafUITests: XCTestCase {
         app.launch()
     }
 
-    func testTapAWordSeeItsCardAndLearnIt() {
+    func testTapAWordSeeItsCardAndSaveIt() {
         button(startingWith: "The Red Boat").tap()
 
         let word = app.links["beach"].firstMatch
@@ -21,7 +21,9 @@ final class LingleafUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["ES: beach"].waitForExistence(timeout: 10), "the card shows the translation")
         XCTAssertTrue(app.staticTexts["/test/"].exists, "the card shows the IPA")
-        app.buttons["Learn"].tap()
+        XCTAssertTrue(app.buttons["Translation language: Español"].exists, "the language button sits under the translation")
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.staticTexts["“beach” saved to Words"].waitForExistence(timeout: 5), "the reader confirms the save")
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.tabBars.buttons["Words"].tap()
@@ -34,8 +36,8 @@ final class LingleafUITests: XCTestCase {
         let word = app.links["sea"].firstMatch
         XCTAssertTrue(word.waitForExistence(timeout: 10))
         word.tap()
-        XCTAssertTrue(app.buttons["Learn"].waitForExistence(timeout: 10))
-        app.buttons["Learn"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
         app.tabBars.buttons["Words"].tap()
@@ -121,11 +123,147 @@ final class LingleafUITests: XCTestCase {
         let unavailable = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Translation unavailable")).firstMatch
         XCTAssertTrue(unavailable.waitForExistence(timeout: 10), "the card says translation is unavailable")
 
-        app.buttons["Learn"].tap()
-        XCTAssertTrue(app.buttons["Learn"].waitForNonExistence(timeout: 10), "the card closes after Learn")
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForNonExistence(timeout: 10), "saving doesn't wait for the translation")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.tabBars.buttons["Words"].tap()
         XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "the word is saved offline")
+    }
+
+    /// S12: a word saved offline has no translation yet; Review says so when the meaning is shown.
+    func testReviewSaysWhenAWordHasNoTranslationYet() {
+        app.terminate()
+        app.launchArguments = ["-ui-testing-offline", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+
+        button(startingWith: "The Red Boat").tap()
+        let word = app.links["beach"].firstMatch
+        XCTAssertTrue(word.waitForExistence(timeout: 10))
+        word.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForNonExistence(timeout: 10))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.tabBars.buttons["Words"].tap()
+        button(startingWith: "Review now").tap()
+        XCTAssertTrue(app.buttons["Show meaning"].waitForExistence(timeout: 5))
+        app.buttons["Show meaning"].tap()
+        let noTranslation = app.staticTexts["No translation yet. Connect to the internet once to get it."]
+        XCTAssertTrue(noTranslation.waitForExistence(timeout: 5), "Review says the translation is missing")
+    }
+
+    /// S4/S15: Undo after Save word takes the word out again; Undo after changing a
+    /// saved word puts back the previous record.
+    func testUndoAfterSaveWordRestoresTheWord() {
+        button(startingWith: "The Red Boat").tap()
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+
+        beach.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 5), "the reader offers Undo")
+        undo.tap()
+        XCTAssertTrue(undo.waitForNonExistence(timeout: 5), "the message closes after Undo")
+
+        beach.tap()
+        XCTAssertTrue(app.buttons["I know it"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["I know it"].isSelected, "after Undo the word is new again")
+        app.buttons["I know it"].tap()
+        XCTAssertTrue(app.staticTexts["“beach” marked as known"].waitForExistence(timeout: 5))
+
+        beach.tap()
+        XCTAssertTrue(app.buttons["I know it"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["I know it"].isSelected, "the card shows the word is known")
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(undo.waitForExistence(timeout: 5))
+        undo.tap()
+
+        beach.tap()
+        XCTAssertTrue(app.buttons["I know it"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["I know it"].isSelected, "Undo put the word back as known")
+        XCTAssertFalse(app.buttons["Saved"].exists)
+        closeCard()
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["Words"].tap()
+        XCTAssertTrue(app.staticTexts["No words yet. While reading, tap a word and choose Save word."].waitForExistence(timeout: 5))
+    }
+
+    /// Deleting a word in Words (swipe action) offers Undo, which puts the word back.
+    func testDeletingAWordOffersUndo() {
+        button(startingWith: "The Red Boat").tap()
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+        beach.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.staticTexts["“beach” saved to Words"].waitForExistence(timeout: 5))
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.tabBars.buttons["Words"].tap()
+        let row = element(labelled: "beach")
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the word is in Words")
+        row.swipeLeft()
+        let delete = app.buttons["Delete word"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), "the swipe shows Delete word")
+        delete.tap()
+
+        XCTAssertTrue(app.staticTexts["“beach” deleted"].waitForExistence(timeout: 3), "Words confirms the delete")
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 3), "Words offers Undo")
+        undo.tap()
+        XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5), "Undo puts the word back")
+    }
+
+    /// Tapping the checked "Saved" button on the card removes the word; Undo saves it again.
+    func testTappingTheCheckedButtonRemovesTheWordWithUndo() {
+        button(startingWith: "The Red Boat").tap()
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+        beach.tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForNonExistence(timeout: 10), "the card closes after Save word")
+
+        beach.tap()
+        let saved = app.buttons["Saved"]
+        XCTAssertTrue(saved.waitForExistence(timeout: 10), "the card shows the word is saved")
+        XCTAssertTrue(saved.isSelected)
+        saved.tap()
+        XCTAssertTrue(app.staticTexts["“beach” removed from Words"].waitForExistence(timeout: 3), "the reader confirms the removal")
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 3), "the reader offers Undo")
+        undo.tap()
+        XCTAssertTrue(undo.waitForNonExistence(timeout: 5), "the message closes after Undo")
+
+        beach.tap()
+        XCTAssertTrue(saved.waitForExistence(timeout: 10), "Undo saved the word again")
+        XCTAssertTrue(saved.isSelected)
+        XCTAssertFalse(app.buttons["Save word"].exists)
+    }
+
+    /// S14: with no language saved or picked from the device, the first card asks
+    /// "Translate into:"; the choice is saved and translates the card in place.
+    func testWithoutALanguageTheCardAsksAndTranslatesInPlace() {
+        app.terminate()
+        app.launchArguments = ["-ui-testing", "-ui-testing-no-language", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+
+        button(startingWith: "The Red Boat").tap()
+        let beach = app.links["beach"].firstMatch
+        XCTAssertTrue(beach.waitForExistence(timeout: 10))
+        beach.tap()
+        XCTAssertTrue(app.staticTexts["Translate into:"].waitForExistence(timeout: 10), "the card asks for a language")
+        XCTAssertTrue(app.buttons["More languages"].exists)
+        XCTAssertTrue(app.buttons["Save word"].isHittable, "the rest of the card works meanwhile")
+
+        app.buttons["Español"].tap()
+        XCTAssertTrue(app.staticTexts["ES: beach"].waitForExistence(timeout: 10), "the translation appears on the same card")
+        XCTAssertFalse(app.staticTexts["Translate into:"].exists, "the question is gone")
+        XCTAssertTrue(app.buttons["Translation language: Español"].exists, "a button to change the language replaces it")
     }
 
     /// Apple's automated accessibility audit (contrast, Dynamic Type, labels,
@@ -164,13 +302,14 @@ final class LingleafUITests: XCTestCase {
         XCTAssertTrue(app.links["beach"].firstMatch.waitForExistence(timeout: 10))
         try audit("Reader")
         app.links["beach"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["Learn"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Save word"].waitForExistence(timeout: 10))
         try audit("Word card")
 
-        // Populated states: learn the word, then audit every screen that shows it.
-        app.buttons["Learn"].tap()
-        XCTAssertTrue(app.buttons["Learn"].waitForNonExistence(timeout: 10), "the card closes after Learn")
-        try audit("Reader with a learning word")
+        // Populated states: save the word, then audit every screen that shows it.
+        app.buttons["Save word"].tap()
+        XCTAssertTrue(app.buttons["Save word"].waitForNonExistence(timeout: 10), "the card closes after Save word")
+        XCTAssertTrue(app.buttons["Undo"].waitForExistence(timeout: 5))
+        try audit("Reader with a learning word and the Undo message")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.tabBars.buttons["Words"].tap()
         XCTAssertTrue(element(labelled: "beach").waitForExistence(timeout: 5))
@@ -228,10 +367,10 @@ final class LingleafUITests: XCTestCase {
         XCTAssertEqual(result, .completed, "\(message); last spoken: '\(probe.exists ? probe.label : "nothing")'", file: file, line: line)
     }
 
-    /// Closes the word card; "Learned" saves the word and dismisses the sheet.
+    /// Closes the word card: "I know it" saves (or, when checked, removes) the word and dismisses the sheet.
     private func closeCard() {
-        app.buttons["Learned"].tap()
-        XCTAssertTrue(app.buttons["Learned"].waitForNonExistence(timeout: 10), "the card closes")
+        app.buttons["I know it"].tap()
+        XCTAssertTrue(app.buttons["I know it"].waitForNonExistence(timeout: 10), "the card closes")
     }
 
     /// A tab bar button sits entirely inside the bar; rows scrolled under the bar only overlap it.

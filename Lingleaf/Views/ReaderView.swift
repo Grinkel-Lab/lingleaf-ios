@@ -34,6 +34,8 @@ struct ReaderView: View {
     @State private var position: Int?
     @State private var restored = false
     @State private var sessionStart: Date?
+    /// "“beach” saved to Words" with Undo, after a word card button.
+    @State private var undo: UndoMessage?
 
     private var book: Book? { model.state.books.first { $0.id == bookID } }
 
@@ -49,14 +51,17 @@ struct ReaderView: View {
                 ProgressView()
             }
         }
+        .undoMessage($undo)
         .navigationTitle(book?.title ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
         .toolbar(.hidden, for: .tabBar)
         .sheet(item: $selection) { selection in
-            WordCardView(selection: selection, source: book?.title ?? "")
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            WordCardView(selection: selection, source: book?.title ?? "") { message in
+                undo = message
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .environment(\.openURL, OpenURLAction { url in
             handle(url)
