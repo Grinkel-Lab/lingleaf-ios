@@ -1,0 +1,107 @@
+name: TestFlight
+
+# Builds a signed Release archive and uploads it to App Store Connect (TestFlight).
+# Manual only: Actions → TestFlight → Run workflow, on `main` for releases.
+# Setup (secrets, Apple account): docs/testflight.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: Archive and upload
+    runs-on: macos-15
+    # Only from main: a workflow edited on another branch never gets the signing key.
+    if: github.ref == 'refs/heads/main'
+    # The environment holds the secrets, requires the maintainer's approval and only
+    # deploys from main (docs/testflight.md).
+    environment: testflight
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Check the App Store Connect secrets
+        run: |
+          for name in ASC_KEY_ID ASC_ISSUER_ID APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing secret $name in the 'testflight' environment. See docs/testflight.md."
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Pinned and checksum-verified: this job later holds the signing key.
+      - name: Generate the Xcode project
+        env:
+          XCODEGEN_VERSION: "2.42.0"
+          XCODEGEN_SHA256: "a760b4bf97460341316a2c00d8c87b2946c6c2729eb57e9a72abb3ef7bc0ef82"
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/xcodegen.zip" \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+          echo "$XCODEGEN_SHA256  $RUNNER_TEMP/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate
+
+      - name: Write the API key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          if [ -z "$ASC_KEY_P8" ]; then
+            echo "::error::Missing secret ASC_KEY_P8 in the 'testflight' environment. See docs/testflight.md."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey.p8"
+
+      - name: Archive (Release, signed by Xcode with the API key)
+        run: |
+          xcodebuild archive \
+            -project Lingleaf.xcodeproj -scheme Lingleaf -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/Lingleaf.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+
+      - name: Upload to App Store Connect
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Lingleaf.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Uploaded build $GITHUB_RUN_NUMBER. It shows in TestFlight after Apple finishes processing (usually 5–30 min)."
+
+      - name: Remove the API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
