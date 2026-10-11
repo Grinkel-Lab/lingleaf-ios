@@ -17,6 +17,7 @@ Android version: [lingleaf-android](https://github.com/erobinsonc/lingleaf-andro
 - **Review** with spaced repetition (1, 3, 7, 14, 30 days).
 - **Read aloud** a word, a sentence or a paragraph (works with the ringer muted).
 - **Thousands of free books** from Project Gutenberg, plus 3 original graded stories (A1–B1). Import your own `.txt`.
+- **Recommended classics from A2 to C2**, filterable by level in Discover.
 - **Daily goal and streak.**
 - No accounts, no ads, no tracking.
 
@@ -58,10 +59,16 @@ Apple Translation doesn't run in the Simulator; try translations on a real devic
 
 ## Privacy
 
-Data stays on your device. Network requests go only to `gutendex.com` / `gutenberg.org`
-(books) and `api.dictionaryapi.dev` (definitions), always over HTTPS. Translation runs
-on the device with Apple Translation. The app ships a privacy manifest declaring no tracking
-and no data collection.
+Lingleaf has no accounts, ads or analytics, and keeps your books and words on your
+device (and in your iCloud/device backup, if you use one). The app itself talks only to
+`gutendex.com` / `gutenberg.org` (books) and `api.dictionaryapi.dev` (definitions),
+always over HTTPS.
+
+Translation runs on the device with Apple Translation; iOS downloads each language
+from Apple the first time (it asks you first). Words and sentences are translated on
+the device; only the English word you tap is sent to the dictionary to fetch its
+definition. The app ships a privacy manifest declaring no tracking and no data
+collection. Full policy: [PRIVACY.md](PRIVACY.md).
 
 ## License
 

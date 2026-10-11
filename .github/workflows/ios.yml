@@ -1,0 +1,101 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Core logic (tests, coverage ≥90%)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test --package-path LingleafCore --enable-code-coverage
+      - name: Coverage gate (Sources only, ≥90% of lines)
+        run: |
+          python3 - "$(swift test --package-path LingleafCore --show-codecov-path)" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1]))["data"][0]["files"]
+          files = [f for f in data if "/Sources/" in f["filename"]]
+          covered = sum(f["summary"]["lines"]["covered"] for f in files)
+          total = sum(f["summary"]["lines"]["count"] for f in files)
+          for f in files:
+              print(f'{f["summary"]["lines"]["percent"]:6.1f}%  {f["filename"].split("/Sources/")[1]}')
+          percent = 100 * covered / total
+          print(f"TOTAL {percent:.1f}% ({covered}/{total} lines)")
+          sys.exit(0 if percent >= 90 else f"Coverage {percent:.1f}% is below 90%")
+          PY
+
+  app:
+    name: App (SwiftLint, build, UI + accessibility tests)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install xcodegen swiftlint
+      - name: SwiftLint
+        run: swiftlint lint --reporter github-actions-logging
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build and test
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          print(next(d['udid'] for runtime, ds in sorted(devices.items(), reverse=True) if 'iOS' in runtime for d in ds if d['name'].startswith('iPhone')))")
+          echo "Simulator: $UDID"
+          xcodebuild test \
+            -project Lingleaf.xcodeproj \
+            -scheme Lingleaf \
+            -destination "id=$UDID" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults.xcresult
+      # ScreenTour attaches a screenshot of every screen (EN/ES, light/dark).
+      - name: Export screenshots
+        if: always()
+        run: python3 .github/scripts/export-screenshots.py TestResults.xcresult
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: screenshots
+          if-no-files-found: ignore
+
+  screenshots:
+    name: Publish screenshots
+    needs: app
+    # Not for forks or Dependabot, whose tokens can't write to the repository.
+    if: always() && github.event.pull_request.head.repo.fork != true && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ios-screenshots
+          path: screenshots
+      # Values go through env, never interpolated into the script (branch names are untrusted).
+      - run: ./.github/scripts/publish-screenshots.sh ios "$BRANCH" "$COMMIT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}

@@ -1,0 +1,97 @@
+import XCTest
+@testable import LingleafCore
+
+final class TextToolsTests: XCTestCase {
+    func testParagraphsJoinHardWrappedLinesAndHandleCRLF() {
+        XCTAssertEqual(
+            TextTools.splitParagraphs("Line one\r\nline two.\r\n\r\n   \nSecond paragraph.\n"),
+            ["Line one line two.", "Second paragraph."]
+        )
+    }
+
+    func testWordRangesKeepContractionsAndSkipNumbers() {
+        let text = "Don’t stop, it's 10 o'clock!"
+        XCTAssertEqual(TextTools.wordRanges(text).map { TextTools.substring(text, $0) }, ["Don’t", "stop", "it's", "o'clock"])
+    }
+
+    func testWordAtFindsTheWordIncludingItsTrailingEdge() {
+        let text = "All animals are equal."
+        XCTAssertEqual(TextTools.wordAt(text, 4), WordRange(4, 11))
+        XCTAssertEqual(TextTools.wordAt(text, 11), WordRange(4, 11))
+        XCTAssertEqual(TextTools.wordAt(text, 21), WordRange(16, 21))
+        XCTAssertNil(TextTools.wordAt("  ...  ", 3))
+        XCTAssertTrue(WordRange(4, 11).contains(5))
+    }
+
+    func testSentenceAtReturnsTheContainingSentence() {
+        let p = "All animals are equal. Some are more equal than others! The end"
+        let offset = (p as NSString).range(of: "more").location
+        XCTAssertEqual(TextTools.sentenceAt(p, offset), "Some are more equal than others!")
+        XCTAssertEqual(TextTools.sentenceAt(p, 0), "All animals are equal.")
+        XCTAssertEqual(TextTools.sentenceAt(p, (p as NSString).range(of: "end").location), "The end")
+        XCTAssertEqual(TextTools.sentenceAt("Just one.", 20), "Just one.")
+    }
+
+    func testBaseFormCandidates() {
+        XCTAssertTrue(TextTools.baseFormCandidates("animals").contains("animal"))
+        XCTAssertTrue(TextTools.baseFormCandidates("houses").contains("house"))
+        XCTAssertEqual(TextTools.baseFormCandidates("stories"), ["story"])
+        XCTAssertEqual(TextTools.baseFormCandidates("tried"), ["try"])
+        XCTAssertTrue(TextTools.baseFormCandidates("walked").contains("walk"))
+        XCTAssertEqual(TextTools.baseFormCandidates("stopped").first, "stop")
+        XCTAssertEqual(TextTools.baseFormCandidates("running").first, "run")
+        XCTAssertTrue(TextTools.baseFormCandidates("making").contains("make"))
+        XCTAssertEqual(TextTools.baseFormCandidates("stood"), ["stand"])
+        XCTAssertEqual(TextTools.baseFormCandidates("Children"), ["child"])
+        XCTAssertEqual(TextTools.baseFormCandidates("cat's"), ["cat"])
+        XCTAssertTrue(TextTools.baseFormCandidates("thing").isEmpty)
+        XCTAssertTrue(TextTools.baseFormCandidates("glass").isEmpty)
+    }
+
+    func testMatchKeysLinkInflectedFormsToTheBaseWord() {
+        XCTAssertTrue(TextTools.matchKeys("Animals").isSuperset(of: ["animals", "animal"]))
+        XCTAssertTrue(TextTools.matchKeys("was").contains("be"))
+    }
+}
+
+final class LearningTests: XCTestCase {
+    private var calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }()
+
+    private func date(_ string: String) -> Date { ISO8601DateFormatter().date(from: string)! }
+
+    func testCorrectAnswerMovesToTheNextBox() {
+        let now = date("2026-10-09T08:00:00Z")
+        XCTAssertEqual(Srs.review(box: 0, correct: true, now: now, calendar: calendar),
+                       SrsResult(box: 1, nextReview: date("2026-10-10T08:00:00Z"), learned: false))
+    }
+
+    func testWrongAnswerResets() {
+        let now = date("2026-10-09T08:00:00Z")
+        XCTAssertEqual(Srs.review(box: 3, correct: false, now: now, calendar: calendar), SrsResult(box: 0, nextReview: now, learned: false))
+    }
+
+    func testLastBoxMarksTheWordLearned() {
+        XCTAssertTrue(Srs.review(box: Srs.intervals.count, correct: true, now: Date(), calendar: calendar).learned)
+    }
+
+    func testStreakCountsConsecutiveDays() {
+        let log = ["2026-10-07": 600, "2026-10-08": 900, "2026-10-09": 600]
+        XCTAssertEqual(readingStreak(log, goalSeconds: 600, today: date("2026-10-09T12:00:00Z"), calendar: calendar), 3)
+    }
+
+    func testUnfinishedTodayKeepsYesterdaysStreak() {
+        let log = ["2026-10-07": 600, "2026-10-08": 600, "2026-10-09": 60]
+        XCTAssertEqual(readingStreak(log, goalSeconds: 600, today: date("2026-10-09T12:00:00Z"), calendar: calendar), 2)
+    }
+
+    func testAGapBreaksTheStreakAndMonthsRollOver() {
+        XCTAssertEqual(readingStreak(["2026-10-06": 600, "2026-10-08": 600], goalSeconds: 600,
+                                     today: date("2026-10-09T12:00:00Z"), calendar: calendar), 1)
+        XCTAssertEqual(readingStreak(["2026-09-30": 600, "2026-10-01": 600], goalSeconds: 600,
+                                     today: date("2026-10-01T12:00:00Z"), calendar: calendar), 2)
+    }
+}

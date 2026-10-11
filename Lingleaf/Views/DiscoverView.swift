@@ -1,0 +1,181 @@
+import SwiftUI
+import LingleafCore
+
+/// Search and download free public-domain books from Project Gutenberg.
+struct DiscoverView: View {
+    @Environment(AppModel.self) private var model
+    @State private var query = ""
+    @State private var recommended: [GutenbergBook] = []
+    @State private var results: [GutenbergBook]?
+    @State private var loading = false
+    @State private var failed = false
+    @State private var downloading: Set<Int> = []
+    @State private var message: String?
+    /// Level chosen in the filter chips; nil shows every recommended book.
+    @State private var level: String?
+
+    /// Levels that have at least one recommended book, easiest first.
+    private static let filterLevels = GutenbergClient.levels.filter { level in
+        GutenbergClient.recommended.contains { $0.level == level }
+    }
+
+    private var downloaded: Set<Int> { Set(model.state.books.compactMap(\.gutenbergID)) }
+    private var books: [GutenbergBook] { results ?? GutenbergClient.filter(recommended, level: level) }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    if results == nil && !recommended.isEmpty { levelFilter }
+                    if loading {
+                        ProgressView().frame(maxWidth: .infinity)
+                    } else if failed {
+                        VStack(spacing: 12) {
+                            Text("Couldn't load the catalog. Check your connection.")
+                            Button("Retry") { Task { await load(results == nil ? nil : query) } }
+                                .buttonStyle(.bordered)
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else if books.isEmpty {
+                        if results == nil && !recommended.isEmpty {
+                            Text("No recommended books at this level.")
+                        } else {
+                            Text("No books found. Try another title or author.")
+                        }
+                    } else {
+                        ForEach(books) { row($0) }
+                    }
+                } header: {
+                    // The credit lives in the header: as a footer, a row among the books or
+                    // a section of its own, the audit reported it as not scaling with Dynamic Type.
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(results == nil ? "Recommended for learners" : "Results")
+                        Text("Free public-domain classics from Project Gutenberg.")
+                            .font(.footnote)
+                            .textCase(nil)
+                    }
+                    .foregroundStyle(Brand.secondaryText)
+                }
+            }
+            .navigationTitle("Discover")
+            .searchable(text: $query, prompt: "Title or author")
+            .onSubmit(of: .search) { Task { await load(query) } }
+            .onChange(of: query) { _, newValue in if newValue.isEmpty { results = nil } }
+            .task { if recommended.isEmpty { await load(nil) } }
+            .alert(message ?? "", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
+                Button("OK", role: .cancel) {}
+            }
+        }
+    }
+
+    /// "All" plus one chip per level; scrolls sideways when the text is large.
+    private var levelFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(nil)
+                ForEach(Self.filterLevels, id: \.self) { chip($0) }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 4)
+        }
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+    }
+
+    private func chip(_ value: String?) -> some View {
+        let selected = level == value
+        return Button {
+            level = value
+        } label: {
+            Group {
+                if let value { Text(verbatim: value) } else { Text("All") }
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 16)
+            .frame(minHeight: 44)
+            // System background is white in light mode and black in dark mode, where the ink is light.
+            .foregroundStyle(selected ? Color(uiColor: .systemBackground) : Color.primary)
+            .background(selected ? Brand.ink : Color(uiColor: .secondarySystemGroupedBackground), in: Capsule())
+            .contentShape(Capsule())
+        }
+        // Plain style so a tap in the row triggers only this chip.
+        .buttonStyle(.plain)
+        .accessibilityLabel(value.map { Text("Level \($0)") } ?? Text("All levels"))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("level-filter-\(value ?? "all")")
+    }
+
+    private func row(_ book: GutenbergBook) -> some View {
+        HStack(spacing: 14) {
+            AsyncImage(url: book.coverURL) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                BookCover(title: book.displayTitle)
+            }
+            .frame(width: 44, height: 62)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(book.displayTitle).font(.headline)
+                HStack(spacing: 6) {
+                    if let level = GutenbergClient.level(for: book.id) { LevelBadge(level: level) }
+                    Text(book.authorName ?? String(localized: "Unknown author"))
+                        .font(.subheadline).foregroundStyle(Brand.secondaryText)
+                }
+            }
+            Spacer(minLength: 8)
+            if downloaded.contains(book.id) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Brand.ink)
+                    .accessibilityLabel(Text("In your library"))
+            } else if downloading.contains(book.id) {
+                ProgressView()
+                    .accessibilityLabel(Text("Downloading"))
+            } else if book.textURL != nil {
+                Button("Get") { Task { await download(book) } }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel(Text("Get \(book.title)"))
+            } else {
+                // No plain-text edition: a disabled button would be dimmed below readable contrast.
+                Text("Not available")
+                    .font(.subheadline)
+                    .foregroundStyle(Brand.secondaryText)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func load(_ search: String?) async {
+        loading = true
+        failed = false
+        defer { loading = false }
+        do {
+            if let search, !search.trimmingCharacters(in: .whitespaces).isEmpty {
+                results = try await model.gutenberg.search(search.trimmingCharacters(in: .whitespaces))
+            } else {
+                recommended = try await model.gutenberg.fetchRecommended()
+            }
+        } catch {
+            failed = true
+        }
+    }
+
+    private func download(_ book: GutenbergBook) async {
+        downloading.insert(book.id)
+        defer { downloading.remove(book.id) }
+        do {
+            let text = try await model.gutenberg.downloadText(book)
+            model.library.addBook(
+                title: book.displayTitle,
+                author: book.authorName ?? String(localized: "Unknown author"),
+                text: text,
+                level: GutenbergClient.level(for: book.id),
+                gutenbergID: book.id
+            )
+            message = String(localized: "“\(book.displayTitle)” is in your library.")
+        } catch {
+            message = String(localized: "Couldn't download “\(book.displayTitle)”. Try again.")
+        }
+    }
+}
