@@ -160,6 +160,27 @@ public enum TextTools {
     /// Where `sentenceAt` is in `paragraph`, without surrounding whitespace, so a
     /// word's offset in the paragraph can be turned into its offset in the sentence.
     public static func sentenceRangeAt(_ paragraph: String, _ offset: Int) -> WordRange {
+        capped(paragraph as NSString, sentenceBounds(paragraph, offset), around: offset)
+    }
+
+    /// Every sentence of `paragraph` in one pass, trimmed and not capped: the text between
+    /// sentence ends, as `sentenceRangeAt` finds them, skipping blank stretches.
+    static func sentenceRanges(_ paragraph: String) -> [WordRange] {
+        let ns = paragraph as NSString
+        let ends = sentenceEnd.matches(in: paragraph, range: NSRange(location: 0, length: ns.length))
+            .map { $0.range.location + $0.range.length } + [ns.length]
+        var out: [WordRange] = []
+        var start = 0
+        for end in ends where end > start {
+            let sentence = trimmed(ns, WordRange(start, end))
+            if sentence.start < sentence.end { out.append(sentence) }
+            start = end
+        }
+        return out
+    }
+
+    /// The whole sentence of `paragraph` at `offset`, trimmed and not capped.
+    private static func sentenceBounds(_ paragraph: String, _ offset: Int) -> WordRange {
         let ns = paragraph as NSString
         var start = 0
         var end = ns.length
@@ -173,8 +194,7 @@ public enum TextTools {
         }
         // Nothing left after the last sentence end: the whole paragraph.
         let sentence = trimmed(ns, WordRange(start, end))
-        let found = sentence.start == sentence.end ? trimmed(ns, WordRange(0, ns.length)) : sentence
-        return capped(ns, found, around: offset)
+        return sentence.start == sentence.end ? trimmed(ns, WordRange(0, ns.length)) : sentence
     }
 
     /// At most `maxSentence` units of `range` around `offset`, cut at spaces: a word's saved
@@ -200,7 +220,7 @@ public enum TextTools {
         return WordRange(start, end)
     }
 
-    private static func isSpace(_ unit: unichar) -> Bool {
+    static func isSpace(_ unit: unichar) -> Bool {
         guard let scalar = Unicode.Scalar(unit) else { return false }
         return CharacterSet.whitespacesAndNewlines.contains(scalar)
     }

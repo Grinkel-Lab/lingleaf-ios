@@ -9,6 +9,8 @@ struct WordCardView: View {
     let source: String
     /// The sheet is at its full height: iOS 26 then draws it opaque, so the card needs no panel of its own.
     var fullHeight = false
+    /// Reads the book aloud from this sentence on; nil hides the button.
+    var onReadFromHere: (() -> Void)?
     /// Called when a button changed the word, just before the card closes, with
     /// the message (and its Undo) the reader shows.
     let onAction: (UndoMessage) -> Void
@@ -259,6 +261,19 @@ struct WordCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let sentenceTranslation {
                     Text(sentenceTranslation).font(.callout).foregroundStyle(Brand.secondaryText)
+                }
+                if let onReadFromHere {
+                    // Back to an earlier point, or on from this one (SPEC S6).
+                    Button {
+                        dismiss()
+                        onReadFromHere()
+                    } label: {
+                        Label("Read from here", systemImage: "play.fill")
+                            .font(.callout.weight(.semibold))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .tint(.primary)
                 }
             }
             Spacer(minLength: 8)
