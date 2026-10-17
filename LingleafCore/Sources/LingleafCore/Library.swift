@@ -84,14 +84,18 @@ public struct BundledStory: Sendable {
 
 public struct LibraryState: Equatable, Sendable {
     public var books: [Book] = []
-    public var words: [VocabWord] = []
     public var readingLog: [String: Int] = [:]
     public var settings = Settings()
 
     public init() {}
 
-    /// Base forms of words being learned.
-    public var learningWords: Set<String> { Set(words.filter { !$0.learned }.map(\.word)) }
+    public var words: [VocabWord] = [] {
+        didSet { learningWords = Set(words.filter { !$0.learned }.map(\.word)) }
+    }
+
+    /// Base forms of words being learned, kept up to date with `words`: the reader asks for
+    /// every word it shows, so it must not rebuild the set each time.
+    public private(set) var learningWords: Set<String> = []
 
     public func word(_ base: String) -> VocabWord? {
         let key = TextTools.normalize(base)
@@ -151,7 +155,12 @@ public final class Library {
     public func load() {
         var loaded = LibraryState()
         loaded.books = decode([Book].self, "books.json") ?? []
-        loaded.words = decode([VocabWord].self, "words.json") ?? []
+        // Saved before contexts were capped, or restored from a backup: cut to size.
+        loaded.words = (decode([VocabWord].self, "words.json") ?? []).map { word in
+            var word = word
+            word.context = TextTools.truncated(word.context, TextTools.maxSentence)
+            return word
+        }
         loaded.readingLog = decode([String: Int].self, "reading-log.json") ?? [:]
         loaded.settings = decode(Settings.self, "settings.json") ?? Settings()
         state = loaded
@@ -170,7 +179,7 @@ public final class Library {
     public func addBook(title: String, author: String, text: String, level: String? = nil, gutenbergID: Int? = nil) -> Book {
         let id = "\(Int(now().timeIntervalSince1970 * 1000))-\(state.books.count)"
         let book = Book(
-            id: id, title: title, author: author, fileName: "book-\(id).txt",
+            id: id, title: TextTools.cleanLabel(title), author: TextTools.cleanLabel(author), fileName: "book-\(id).txt",
             paragraphCount: TextTools.splitParagraphs(text).count,
             level: level, gutenbergID: gutenbergID, addedAt: now(), lastOpenedAt: nil, progressParagraph: 0
         )
@@ -357,7 +366,14 @@ public final class Library {
         save(state.words, "words.json")
     }
 
+    /// A translation can be longer than its sentence; twice the sentence's limit.
+    private static let maxContextTranslation = 2 * TextTools.maxSentence
+
     private func replace(_ entry: VocabWord) {
+        // Every saved word passes here: whatever a caller hands in, nothing huge is kept.
+        var entry = entry
+        entry.context = TextTools.truncated(entry.context, TextTools.maxSentence)
+        entry.contextTranslation = entry.contextTranslation.map { TextTools.truncated($0, Self.maxContextTranslation) }
         var words = state.words.filter { $0.word != entry.word }
         words.append(entry)
         state.words = words.sorted { $0.createdAt > $1.createdAt }
@@ -397,7 +413,7 @@ public final class Library {
     /// next save replaces it, so a damaged library or word list can be recovered.
     private func decode<T: Decodable>(_ type: T.Type, _ name: String) -> T? {
         guard let text = storage.read(name) else { return nil }
-        guard let value = try? decoder.decode(type, from: Data(text.utf8)) else {
+        guard JSONGuard.isShallow(Data(text.utf8)), let value = try? decoder.decode(type, from: Data(text.utf8)) else {
             storage.write("\(name).corrupt", text)
             return nil
         }
@@ -405,7 +421,15 @@ public final class Library {
     }
 }
 
-/// Files in a directory, written atomically.
+/// Names a `Storage` accepts: the plain names the app makes ("books.json", "book-<id>.txt").
+/// A name read back from a restored backup can't reach outside the app's folder.
+public enum StorageNames {
+    public static func isSafe(_ name: String) -> Bool {
+        !name.contains("..") && name.range(of: #"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\z"#, options: .regularExpression) != nil
+    }
+}
+
+/// Files in a directory, written atomically. Only `StorageNames.isSafe` names.
 public struct FileStorage: Storage {
     private let directory: URL
 
@@ -415,14 +439,17 @@ public struct FileStorage: Storage {
     }
 
     public func read(_ name: String) -> String? {
-        try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8)
+        guard StorageNames.isSafe(name) else { return nil }
+        return try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8)
     }
 
     public func write(_ name: String, _ content: String) {
+        guard StorageNames.isSafe(name) else { return }
         try? content.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
 
     public func delete(_ name: String) {
+        guard StorageNames.isSafe(name) else { return }
         try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
     }
 }
