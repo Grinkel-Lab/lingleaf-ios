@@ -26,11 +26,25 @@ public struct VocabWord: Codable, Identifiable, Hashable, Sendable {
     public var translationLanguage: String?
     public var phonetic: String
     public var context: String
+    /// The translation of `context`, and the language it is in; filled in later when the
+    /// card didn't have it, and again when the translation language changes.
+    public var contextTranslation: String?
+    public var contextTranslationLanguage: String?
+
+    /// `contextTranslation` when it is in `language`.
+    public func contextTranslation(in language: String?) -> String? {
+        contextTranslationLanguage == language ? contextTranslation : nil
+    }
     public var source: String
     public var learned: Bool
     public var box: Int
     public let createdAt: Date
     public var nextReview: Date
+    /// Set when `word` is the verb group of a helper or modal verb ("did not go"): what is
+    /// learned and translated, since the helper alone means little. Nil for other words.
+    public var kind: FunctionWord.Kind?
+    /// The helper or modal verb's base form ("do" for "did not go").
+    public var base: String?
 
     public var id: String { word }
 
@@ -45,6 +59,16 @@ public struct Settings: Codable, Equatable, Sendable {
     public var targetLanguage: String?
 
     public init() {}
+
+    /// Within the ranges Settings offers: a restored or edited settings file can't make the
+    /// streak count forever (a goal of 0) or the reader unreadable.
+    public func bounded() -> Settings {
+        var settings = self
+        settings.dailyGoalMinutes = min(max(dailyGoalMinutes, 5), 60)
+        settings.fontSize = fontSize.isFinite ? min(max(fontSize, 14), 34) : Settings().fontSize
+        settings.speechRate = speechRate.isFinite ? min(max(speechRate, 0.3), 0.6) : Settings().speechRate
+        return settings
+    }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -70,14 +94,18 @@ public struct BundledStory: Sendable {
 
 public struct LibraryState: Equatable, Sendable {
     public var books: [Book] = []
-    public var words: [VocabWord] = []
     public var readingLog: [String: Int] = [:]
     public var settings = Settings()
 
     public init() {}
 
-    /// Base forms of words being learned.
-    public var learningWords: Set<String> { Set(words.filter { !$0.learned }.map(\.word)) }
+    public var words: [VocabWord] = [] {
+        didSet { learningWords = Set(words.filter { !$0.learned }.map(\.word)) }
+    }
+
+    /// Base forms of words being learned, kept up to date with `words`: the reader asks for
+    /// every word it shows, so it must not rebuild the set each time.
+    public private(set) var learningWords: Set<String> = []
 
     public func word(_ base: String) -> VocabWord? {
         let key = TextTools.normalize(base)
@@ -136,10 +164,20 @@ public final class Library {
 
     public func load() {
         var loaded = LibraryState()
-        loaded.books = decode([Book].self, "books.json") ?? []
-        loaded.words = decode([VocabWord].self, "words.json") ?? []
+        // Progress stays inside the book, whatever a restored file says.
+        loaded.books = (decode([Book].self, "books.json") ?? []).map { book in
+            var book = book
+            book.progressParagraph = min(max(book.progressParagraph, 0), max(book.paragraphCount - 1, 0))
+            return book
+        }
+        // Saved before contexts were capped, or restored from a backup: cut to size.
+        loaded.words = (decode([VocabWord].self, "words.json") ?? []).map { word in
+            var word = word
+            word.context = TextTools.truncated(word.context, TextTools.maxSentence)
+            return word
+        }
         loaded.readingLog = decode([String: Int].self, "reading-log.json") ?? [:]
-        loaded.settings = decode(Settings.self, "settings.json") ?? Settings()
+        loaded.settings = (decode(Settings.self, "settings.json") ?? Settings()).bounded()
         state = loaded
     }
 
@@ -156,7 +194,7 @@ public final class Library {
     public func addBook(title: String, author: String, text: String, level: String? = nil, gutenbergID: Int? = nil) -> Book {
         let id = "\(Int(now().timeIntervalSince1970 * 1000))-\(state.books.count)"
         let book = Book(
-            id: id, title: title, author: author, fileName: "book-\(id).txt",
+            id: id, title: TextTools.cleanLabel(title), author: TextTools.cleanLabel(author), fileName: "book-\(id).txt",
             paragraphCount: TextTools.splitParagraphs(text).count,
             level: level, gutenbergID: gutenbergID, addedAt: now(), lastOpenedAt: nil, progressParagraph: 0
         )
@@ -215,6 +253,17 @@ public final class Library {
         return state.words.filter { $0.isDue(now) }.sorted { $0.nextReview < $1.nextReview }
     }
 
+    /// Today's review session: at most `Srs.sessionLimit` due words, interleaved by book.
+    public func reviewSession() -> [VocabWord] { Srs.session(dueWords()) }
+
+    /// Words being learned that come due before the end of tomorrow (not those due now),
+    /// for "12 more tomorrow".
+    public func dueByEndOfTomorrow() -> Int {
+        let now = now()
+        let end = Srs.startOfDay(2, after: now, calendar: calendar)
+        return state.words.filter { !$0.learned && $0.nextReview > now && $0.nextReview < end }.count
+    }
+
     public func isLearning(_ token: String) -> Bool {
         let learning = state.learningWords
         return !learning.isEmpty && !TextTools.matchKeys(token).isDisjoint(with: learning)
@@ -223,10 +272,12 @@ public final class Library {
     /// Saves the word as being learned or as known and returns the record it
     /// replaced (nil when the word was new), so the change can be undone with
     /// `restoreWord`. A blank translation, phonetic, context or source keeps the saved one.
+    /// For a helper or modal verb, `word` is its verb group and `kind`/`base` say what it is.
     @discardableResult
     public func saveWord(
         _ word: String, learned: Bool, translation: String? = nil, translationLanguage: String? = nil,
-        phonetic: String? = nil, context: String = "", source: String = ""
+        phonetic: String? = nil, context: String = "", contextTranslation: String? = nil, source: String = "",
+        kind: FunctionWord.Kind? = nil, base: String? = nil
     ) -> VocabWord? {
         let key = TextTools.normalize(word)
         let existing = state.words.first { $0.word == key }
@@ -234,17 +285,30 @@ public final class Library {
             word: key, translation: "", translationLanguage: nil, phonetic: "", context: "", source: "",
             learned: learned, box: 0, createdAt: now(), nextReview: now()
         )
+        // A new word is first reviewed tomorrow, after a night's sleep (S7).
         if !learned, existing == nil || existing?.learned == true {
             entry.box = 0
-            entry.nextReview = now()
+            entry.nextReview = Srs.startOfDay(1, after: now(), calendar: calendar)
         }
         entry.learned = learned
+        entry.kind = kind
+        entry.base = kind == nil ? nil : base
         if let translation, !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             entry.translation = translation
             entry.translationLanguage = translationLanguage
         }
         if let phonetic, !phonetic.isEmpty { entry.phonetic = phonetic }
-        if !context.isEmpty { entry.context = context }
+        if !context.isEmpty {
+            if context != entry.context {
+                entry.contextTranslation = nil
+                entry.contextTranslationLanguage = nil
+            }
+            entry.context = context
+        }
+        if let contextTranslation, !contextTranslation.isEmpty {
+            entry.contextTranslation = contextTranslation
+            entry.contextTranslationLanguage = translationLanguage
+        }
         if !source.isEmpty { entry.source = source }
         replace(entry)
         return existing
@@ -270,6 +334,21 @@ public final class Library {
         entry.translation = text
         entry.translationLanguage = language
         replace(entry)
+    }
+
+    /// Records the translation of a word's sentence that arrived after it was saved.
+    public func setContextTranslation(_ word: String, _ text: String, language: String) {
+        let key = TextTools.normalize(word)
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              var entry = state.words.first(where: { $0.word == key }), !entry.context.isEmpty else { return }
+        entry.contextTranslation = text
+        entry.contextTranslationLanguage = language
+        replace(entry)
+    }
+
+    /// Words whose sentence has no translation into `target` yet.
+    public func contextsNeedingTranslation(_ target: String) -> [VocabWord] {
+        state.words.filter { !$0.context.isEmpty && $0.contextTranslation(in: target) == nil }
     }
 
     /// Words to translate into `target`: no translation yet, or one recorded in
@@ -302,7 +381,14 @@ public final class Library {
         save(state.words, "words.json")
     }
 
+    /// A translation can be longer than its sentence; twice the sentence's limit.
+    private static let maxContextTranslation = 2 * TextTools.maxSentence
+
     private func replace(_ entry: VocabWord) {
+        // Every saved word passes here: whatever a caller hands in, nothing huge is kept.
+        var entry = entry
+        entry.context = TextTools.truncated(entry.context, TextTools.maxSentence)
+        entry.contextTranslation = entry.contextTranslation.map { TextTools.truncated($0, Self.maxContextTranslation) }
         var words = state.words.filter { $0.word != entry.word }
         words.append(entry)
         state.words = words.sorted { $0.createdAt > $1.createdAt }
@@ -342,7 +428,7 @@ public final class Library {
     /// next save replaces it, so a damaged library or word list can be recovered.
     private func decode<T: Decodable>(_ type: T.Type, _ name: String) -> T? {
         guard let text = storage.read(name) else { return nil }
-        guard let value = try? decoder.decode(type, from: Data(text.utf8)) else {
+        guard JSONGuard.isShallow(Data(text.utf8)), let value = try? decoder.decode(type, from: Data(text.utf8)) else {
             storage.write("\(name).corrupt", text)
             return nil
         }
@@ -350,7 +436,15 @@ public final class Library {
     }
 }
 
-/// Files in a directory, written atomically.
+/// Names a `Storage` accepts: the plain names the app makes ("books.json", "book-<id>.txt").
+/// A name read back from a restored backup can't reach outside the app's folder.
+public enum StorageNames {
+    public static func isSafe(_ name: String) -> Bool {
+        !name.contains("..") && name.range(of: #"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\z"#, options: .regularExpression) != nil
+    }
+}
+
+/// Files in a directory, written atomically. Only `StorageNames.isSafe` names.
 public struct FileStorage: Storage {
     private let directory: URL
 
@@ -360,14 +454,20 @@ public struct FileStorage: Storage {
     }
 
     public func read(_ name: String) -> String? {
-        try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8)
+        guard StorageNames.isSafe(name) else { return nil }
+        return try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8)
     }
 
     public func write(_ name: String, _ content: String) {
-        try? content.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        guard StorageNames.isSafe(name) else { return }
+        // Atomic, and encrypted by Data Protection until the device is first unlocked after a restart.
+        try? Data(content.utf8).write(
+            to: directory.appendingPathComponent(name), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+        )
     }
 
     public func delete(_ name: String) {
+        guard StorageNames.isSafe(name) else { return }
         try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
     }
 }

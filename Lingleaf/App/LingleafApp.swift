@@ -21,9 +21,18 @@ struct LingleafApp: App {
                 // After the overlay, so the probe reads the model from the environment too.
                 .environment(model)
                 .tint(Brand.ink)
-                // Lets UI tests and the screenshot tour render dark mode on any simulator.
-                .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("-dark-mode") ? .dark : nil)
+                .preferredColorScheme(Self.forcedColorScheme)
         }
+    }
+
+    /// Lets UI tests and the screenshot tour render dark mode on any simulator. Release
+    /// builds take no launch arguments: they follow the system setting.
+    private static var forcedColorScheme: ColorScheme? {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-dark-mode") ? .dark : nil
+        #else
+        nil
+        #endif
     }
 }
 
@@ -40,6 +49,8 @@ final class AppModel {
     let fakeTranslator: (@Sendable (String) throws -> String)?
     /// The language picked from the device's preferred languages; nil when none is supported (then the app asks).
     let autoLanguage: String?
+    /// Book covers from Project Gutenberg; nil in UI tests, so they never depend on the network.
+    let covers: CoverLoader?
     /// Drives `TranslationWorker`: each new or invalidated value translates the saved words that need it.
     private(set) var workerConfiguration: TranslationSession.Configuration?
     /// UI tests only: the last text handed to the fake speaker, shown by `LastSpokenProbe`.
@@ -48,8 +59,9 @@ final class AppModel {
 
     init(
         library: Library, http: HttpFetcher, speaker: Speaker, autoLanguage: String?,
-        fakeTranslator: (@Sendable (String) throws -> String)? = nil
+        fakeTranslator: (@Sendable (String) throws -> String)? = nil, covers: CoverLoader? = CoverLoader()
     ) {
+        self.covers = covers
         self.library = library
         self.dictionary = DictionaryClient(http: http)
         self.gutenberg = GutenbergClient(http: http)
@@ -70,8 +82,10 @@ final class AppModel {
         let arguments = ProcessInfo.processInfo.arguments
         // With -ui-testing-no-language no translation language is saved, so the word card asks.
         let language = arguments.contains("-ui-testing-no-language") ? nil : "es"
-        if arguments.contains("-ui-testing-offline") { return uiTesting(offline: true, language: language) }
-        if arguments.contains("-ui-testing") { return uiTesting(offline: false, language: language) }
+        // With -ui-testing-due a word is waiting for review (new words are first due tomorrow).
+        let due = arguments.contains("-ui-testing-due")
+        if arguments.contains("-ui-testing-offline") { return uiTesting(offline: true, language: language, due: due) }
+        if arguments.contains("-ui-testing") { return uiTesting(offline: false, language: language, due: due) }
         #endif
         return live()
     }
@@ -92,12 +106,14 @@ final class AppModel {
     /// and translations. With `offline`, every request fails and translation throws,
     /// as on a device without internet. The speaker records instead of speaking.
     /// `language` is saved as the translation language; nothing is picked from the device.
-    private static func uiTesting(offline: Bool, language: String?) -> AppModel {
+    private static func uiTesting(offline: Bool, language: String?, due: Bool) -> AppModel {
         let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let http = ClosureFetcher { url in
             if offline { throw NetworkError("The Internet connection appears to be offline.") }
             if url.contains("gutendex") { return HttpResponse(status: 200, text: fakeCatalog) }
-            if url.contains("gutenberg.org/ebooks/") { return HttpResponse(status: 200, text: fakeBookText) }
+            // Peter Pan is "not available right now", to show that message.
+            if url.contains("gutenberg.org/cache/epub/16/") { return HttpResponse(status: 404, text: "") }
+            if url.contains("gutenberg.org/cache/epub/") { return HttpResponse(status: 200, text: fakeBookText) }
             guard url.contains("dictionaryapi.dev") else { return HttpResponse(status: 404, text: "") }
             let word = url.split(separator: "/").last.map(String.init) ?? ""
             let json = #"[{"word": "\#(word)", "phonetic": "/test/", "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "Definition of \#(word)."}]}]}]"#
@@ -111,9 +127,18 @@ final class AppModel {
         }
         let speaker = Speaker()
         let library = Library(storage: FileStorage(directory: dir))
-        let model = AppModel(library: library, http: http, speaker: speaker, autoLanguage: nil, fakeTranslator: translator)
+        let model = AppModel(library: library, http: http, speaker: speaker, autoLanguage: nil, fakeTranslator: translator, covers: nil)
         speaker.record = { [weak model] text in model?.lastSpoken = text }
         if let language { library.updateSettings { $0.targetLanguage = language } }
+        if due {
+            let sentence = "Tom lives in a small house by the sea."
+            library.saveWord(
+                "sea", learned: false, translation: offline ? nil : "ES: sea", translationLanguage: "es",
+                context: sentence, contextTranslation: offline ? nil : "ES: \(sentence)", source: "The Red Boat"
+            )
+            // "Again" makes it due now.
+            library.answerReview("sea", correct: false)
+        }
         return model
     }
 
@@ -195,11 +220,16 @@ final class AppModel {
     /// language (just saved, saved offline, or the language changed). UI tests use
     /// the fake translator; otherwise `TranslationWorker` runs `translatePending`.
     func translateMissing() {
-        guard let target = targetLanguage, !library.wordsNeedingTranslation(target).isEmpty else { return }
+        guard let target = targetLanguage,
+              !library.wordsNeedingTranslation(target).isEmpty || !library.contextsNeedingTranslation(target).isEmpty else { return }
         if let fakeTranslator {
             for word in library.wordsNeedingTranslation(target) {
                 guard let text = try? fakeTranslator(word.word) else { return }
                 library.setTranslation(word.word, text, language: target)
+            }
+            for word in library.contextsNeedingTranslation(target) {
+                guard let text = try? fakeTranslator(word.context) else { return }
+                library.setContextTranslation(word.word, text, language: target)
             }
             return
         }
@@ -217,16 +247,23 @@ final class AppModel {
         guard let target = targetLanguage else { return }
         let language = Locale.Language(identifier: target)
         let words = library.wordsNeedingTranslation(target)
-        guard workerConfiguration?.target == language, !words.isEmpty else { return }
+        let contexts = library.contextsNeedingTranslation(target)
+        guard workerConfiguration?.target == language, !words.isEmpty || !contexts.isEmpty else { return }
         // Only with the language already on the device: in the background the app
         // doesn't ask to download it (the word card does).
         let status = await LanguageAvailability().status(from: Locale.Language(identifier: "en"), to: language)
         guard status == .installed else { return }
+        // A saved sentence is told apart from its word by a prefix on the identifier.
         let requests = words.map { TranslationSession.Request(sourceText: $0.word, clientIdentifier: $0.word) }
+            + contexts.map { TranslationSession.Request(sourceText: $0.context, clientIdentifier: "context:\($0.word)") }
         guard let responses = try? await session.translations(from: requests) else { return }
         for response in responses {
-            guard let word = response.clientIdentifier else { continue }
-            library.setTranslation(word, response.targetText, language: target)
+            guard let id = response.clientIdentifier else { continue }
+            if id.hasPrefix("context:") {
+                library.setContextTranslation(String(id.dropFirst("context:".count)), response.targetText, language: target)
+            } else {
+                library.setTranslation(id, response.targetText, language: target)
+            }
         }
     }
 }

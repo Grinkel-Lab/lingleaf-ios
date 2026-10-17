@@ -9,6 +9,46 @@ final class TextToolsTests: XCTestCase {
         )
     }
 
+    func testAParagraphTheSizeOfABookIsCutAtSentenceEndsOrSpaces() {
+        let noStops = String(repeating: "word ", count: 5_000)
+        let pieces = TextTools.splitParagraphs(noStops)
+        XCTAssertGreaterThan(pieces.count, 1)
+        XCTAssertTrue(pieces.allSatisfy { $0.utf16.count <= TextTools.maxParagraph })
+        XCTAssertEqual(pieces.joined(separator: " "), noStops.trimmingCharacters(in: .whitespaces), "no word lost or cut")
+        let sentences = TextTools.splitParagraphs(String(repeating: "A short sentence here. ", count: 300))
+        XCTAssertTrue(sentences.allSatisfy { $0.hasSuffix(".") && $0.utf16.count <= TextTools.maxParagraph })
+        let oneWord = TextTools.splitParagraphs(String(repeating: "a", count: 4_500))
+        XCTAssertEqual(oneWord.map(\.count), [2_000, 2_000, 500])
+    }
+
+    func testATenMegabyteTextWithoutBlankLinesSplitsInLinearTime() {
+        let book = String(repeating: "word ", count: 2_000_000)
+        let started = Date()
+        let pieces = TextTools.splitParagraphs(book)
+        XCTAssertEqual(pieces.count, 5_000, "2,000-unit pieces")
+        XCTAssertLessThan(Date().timeIntervalSince(started), 3)
+    }
+
+    func testALongSentenceIsCappedAroundTheTappedWord() {
+        let paragraph = String(repeating: "word ", count: 500)
+        let range = TextTools.sentenceRangeAt(paragraph, 1_200)
+        XCTAssertLessThanOrEqual(range.end - range.start, TextTools.maxSentence)
+        XCTAssertTrue(range.contains(1_200))
+        XCTAssertEqual(TextTools.substring(paragraph, range).first, "w", "starts at a word")
+        XCTAssertEqual(TextTools.sentenceAt("Short one. Here.", 2), "Short one.", "ordinary sentences are unchanged")
+    }
+
+    func testLabelsLoseInvisibleCharactersAndStayShort() {
+        XCTAssertEqual(TextTools.cleanLabel("\u{202E}evil\u{200B} title\n  x"), "evil title x")
+        XCTAssertEqual(TextTools.cleanLabel(String(repeating: "t", count: 300)).count, TextTools.maxLabel)
+        XCTAssertEqual(TextTools.cleanLabel("Alice’s Adventures"), "Alice’s Adventures")
+        let zalgo = TextTools.cleanLabel("a" + String(repeating: "\u{0301}", count: 100_000))
+        XCTAssertEqual(zalgo.unicodeScalars.count, 1 + TextTools.maxCombiningMarks, "at most 4 accents on a letter")
+        XCTAssertEqual(TextTools.cleanLabel("\u{3164}\u{115F}\u{2800}Fake"), "Fake", "blank fillers")
+        XCTAssertEqual(TextTools.cleanLabel("\u{3000}\u{00A0}Alice\u{2003} x"), "Alice x", "Unicode spaces")
+        XCTAssertEqual(TextTools.cleanLabel("Cafe\u{0301}"), "Cafe\u{0301}")
+    }
+
     func testWordRangesKeepContractionsAndSkipNumbers() {
         let text = "Don’t stop, it's 10 o'clock!"
         XCTAssertEqual(TextTools.wordRanges(text).map { TextTools.substring(text, $0) }, ["Don’t", "stop", "it's", "o'clock"])
@@ -48,6 +88,14 @@ final class TextToolsTests: XCTestCase {
         XCTAssertTrue(TextTools.baseFormCandidates("glass").isEmpty)
     }
 
+    func testOccurrencesFindTheSavedWordOrGroupInASentence() {
+        let sentence = "All animals are equal, but some animal is more equal."
+        XCTAssertEqual(TextTools.occurrences(of: "animal", in: sentence).map { TextTools.substring(sentence, $0) }, ["animals", "animal"])
+        let group = "He did NOT go home."
+        XCTAssertEqual(TextTools.occurrences(of: "did not go", in: group).map { TextTools.substring(group, $0) }, ["did NOT go"])
+        XCTAssertTrue(TextTools.occurrences(of: "can we fix", in: group).isEmpty)
+    }
+
     func testMatchKeysLinkInflectedFormsToTheBaseWord() {
         XCTAssertTrue(TextTools.matchKeys("Animals").isSuperset(of: ["animals", "animal"]))
         XCTAssertTrue(TextTools.matchKeys("was").contains("be"))
@@ -66,7 +114,14 @@ final class LearningTests: XCTestCase {
     func testCorrectAnswerMovesToTheNextBox() {
         let now = date("2026-10-09T08:00:00Z")
         XCTAssertEqual(Srs.review(box: 0, correct: true, now: now, calendar: calendar),
-                       SrsResult(box: 1, nextReview: date("2026-10-10T08:00:00Z"), learned: false))
+                       SrsResult(box: 1, nextReview: date("2026-10-10T04:00:00Z"), learned: false), "due from the start (04:00) of the next day")
+    }
+
+    func testReviewDaysStartAtFourInTheMorning() {
+        XCTAssertEqual(Srs.startOfDay(1, after: date("2026-10-09T23:50:00Z"), calendar: calendar), date("2026-10-10T04:00:00Z"))
+        XCTAssertEqual(Srs.startOfDay(1, after: date("2026-10-10T01:00:00Z"), calendar: calendar), date("2026-10-10T04:00:00Z"),
+                       "01:00 still belongs to the day before")
+        XCTAssertEqual(Srs.startOfDay(1, after: date("2026-10-10T04:00:00Z"), calendar: calendar), date("2026-10-11T04:00:00Z"))
     }
 
     func testWrongAnswerResets() {

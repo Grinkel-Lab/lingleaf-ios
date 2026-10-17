@@ -11,6 +11,52 @@
         }
       }
     },
+    "%lld books found": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld book found"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld books found"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld libro encontrado"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld libros encontrados"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld libros encontrados"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld days in a row": {
       "localizations": {
         "en": {
@@ -63,6 +109,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld minutos al día"
+          }
+        }
+      }
+    },
+    "%lld more due today.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more due today."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more due today."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Queda %lld para hoy."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Quedan %lld para hoy."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Quedan %lld para hoy."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld words tomorrow.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld word tomorrow."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld words tomorrow."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mañana tienes %lld palabra."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mañana tienes %lld palabras."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mañana tienes %lld palabras."
+                }
+              }
+            }
           }
         }
       }
@@ -163,16 +301,6 @@
         }
       }
     },
-    "All done!": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Listo!"
-          }
-        }
-      }
-    },
     "All levels": {
       "localizations": {
         "es": {
@@ -203,6 +331,26 @@
         }
       }
     },
+    "Cancel": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "Cancel download": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar descarga"
+          }
+        }
+      }
+    },
     "Close": {
       "comment": "Closes the Undo message when it doesn't time out (VoiceOver or Switch Control on).",
       "localizations": {
@@ -224,32 +372,12 @@
         }
       }
     },
-    "Couldn't download “%@”. Try again.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo descargar “%@”. Intenta de nuevo."
-          }
-        }
-      }
-    },
     "Couldn't import that file. Try a plain-text (.txt) English book.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "No se pudo importar. Intenta con un libro en inglés en texto plano (.txt)."
-          }
-        }
-      }
-    },
-    "Couldn't load the catalog. Check your connection.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo cargar el catálogo. Revisa tu conexión."
           }
         }
       }
@@ -314,12 +442,32 @@
         }
       }
     },
-    "Downloading": {
+    "Done for now.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Descargando"
+            "value": "Listo por ahora."
+          }
+        }
+      }
+    },
+    "Done for today.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo por hoy."
+          }
+        }
+      }
+    },
+    "Downloading %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando %@"
           }
         }
       }
@@ -374,12 +522,32 @@
         }
       }
     },
+    "Helper verb": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbo auxiliar"
+          }
+        }
+      }
+    },
     "I know it": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Ya la sé"
+          }
+        }
+      }
+    },
+    "I remembered": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo recordé"
           }
         }
       }
@@ -410,6 +578,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "En tu biblioteca"
+          }
+        }
+      }
+    },
+    "Keep going": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seguir"
           }
         }
       }
@@ -514,6 +692,16 @@
         }
       }
     },
+    "Modal verb": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbo modal"
+          }
+        }
+      }
+    },
     "More languages": {
       "localizations": {
         "es": {
@@ -614,6 +802,36 @@
         }
       }
     },
+    "Project Gutenberg didn't answer. Try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project Gutenberg no respondió. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "Read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer"
+          }
+        }
+      }
+    },
+    "Read %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer %@"
+          }
+        }
+      }
+    },
     "Read %lld minutes a day": {
       "localizations": {
         "es": {
@@ -694,6 +912,16 @@
         }
       }
     },
+    "Retry %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar %@"
+          }
+        }
+      }
+    },
     "Review": {
       "localizations": {
         "es": {
@@ -764,6 +992,26 @@
         }
       }
     },
+    "Searching Project Gutenberg…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscando en Project Gutenberg…"
+          }
+        }
+      }
+    },
+    "Selected": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionada"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "es": {
@@ -814,6 +1062,16 @@
         }
       }
     },
+    "Still searching. Project Gutenberg can be slow.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seguimos buscando. Project Gutenberg puede tardar."
+          }
+        }
+      }
+    },
     "Stop reading": {
       "localizations": {
         "es": {
@@ -860,6 +1118,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Este libro está vacío."
+          }
+        }
+      }
+    },
+    "This book isn't available right now.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este libro no está disponible en este momento."
           }
         }
       }
@@ -984,48 +1252,22 @@
         }
       }
     },
-    "You reviewed %lld words.": {
+    "You're offline. Connect to the internet to download it.": {
       "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "You reviewed %lld word."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "You reviewed %lld words."
-                }
-              }
-            }
-          }
-        },
         "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Repasaste %lld palabra."
-                }
-              },
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Repasaste %lld palabras."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Repasaste %lld palabras."
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión. Conéctate a internet para descargarlo."
+          }
+        }
+      }
+    },
+    "You're offline. Connect to the internet to search.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión. Conéctate a internet para buscar."
           }
         }
       }
@@ -1046,6 +1288,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tu biblioteca está vacía"
+          }
+        }
+      }
+    },
+    "“%@” (= “%@”) + base verb = past negative: “didn't go”, not “didn't went”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” (= “%2$@”) + verbo en forma base = negación en pasado: “didn't go”, no “didn't went”."
+          }
+        }
+      }
+    },
+    "“%@” (= “%@”) + base verb = present negative: “%@ like”, not “%@ likes”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” (= “%2$@”) + verbo en forma base = negación en presente: “%3$@ like”, no “%4$@ likes”."
+          }
+        }
+      }
+    },
+    "“%@” (= “%@”): the negative of “%@” + verb.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” (= “%2$@”): la forma negativa de “%3$@” + verbo."
+          }
+        }
+      }
+    },
+    "“%@” + base verb = past negative: “did not go”, not “did not went”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” + verbo en forma base = negación en pasado: “did not go”, no “did not went”."
+          }
+        }
+      }
+    },
+    "“%@” + base verb = present negative: “%@ like”, not “%@ likes”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” + verbo en forma base = negación en presente: “%2$@ like”, no “%3$@ likes”."
+          }
+        }
+      }
+    },
+    "“%@” + base verb tells someone not to do it: “Don't touch”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” + verbo en forma base sirve para prohibir: “Don't touch” = no toques."
+          }
+        }
+      }
+    },
+    "“%@” + pronoun at the end asks the listener to agree, like “right?”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” + pronombre al final pide que el otro confirme, como “¿verdad?”."
+          }
+        }
+      }
+    },
+    "“%@” + verb: it is not allowed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” + verbo: está prohibido."
           }
         }
       }
@@ -1110,12 +1432,132 @@
         }
       }
     },
+    "“%@” starts a question about the past.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” abre una pregunta sobre el pasado."
+          }
+        }
+      }
+    },
+    "“%@” starts a question about the present.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” abre una pregunta sobre el presente."
+          }
+        }
+      }
+    },
     "“%@” will be removed from your library. Your saved words stay.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "“%@” se quitará de tu biblioteca. Tus palabras guardadas se conservan."
+          }
+        }
+      }
+    },
+    "“%@”: the negative of “%@” + verb.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@”: la forma negativa de “%2$@” + verbo."
+          }
+        }
+      }
+    },
+    "“can” + verb: be able to, or be allowed to.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“can” + verbo: poder (ser capaz o tener permiso)."
+          }
+        }
+      }
+    },
+    "“could” + verb: was able to, or it’s possible.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“could” + verbo: podía o podría."
+          }
+        }
+      }
+    },
+    "“may” + verb: maybe, or permission.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“may” + verbo: quizás, o permiso."
+          }
+        }
+      }
+    },
+    "“might” + verb: maybe.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“might” + verbo: quizás, puede que…"
+          }
+        }
+      }
+    },
+    "“must” + verb: it is necessary, or it is surely true.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“must” + verbo: hay que hacerlo, o seguro que es así."
+          }
+        }
+      }
+    },
+    "“shall” + verb: the future, or an offer (“Shall we go?”).": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“shall” + verbo: el futuro, o una propuesta (“Shall we go?” = ¿Vamos?)."
+          }
+        }
+      }
+    },
+    "“should” + verb: advice, what is right to do.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“should” + verbo: un consejo (debería…)."
+          }
+        }
+      }
+    },
+    "“will” + verb: the future.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“will” + verbo: el futuro (iré, irás…)."
+          }
+        }
+      }
+    },
+    "“would” + verb: what would happen, or a polite request.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“would” + verbo: lo que pasaría (iría, haría…) o un pedido amable."
           }
         }
       }

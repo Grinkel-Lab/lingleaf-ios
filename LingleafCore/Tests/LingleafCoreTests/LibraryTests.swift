@@ -28,6 +28,25 @@ final class LibraryTests: XCTestCase {
         return library
     }
 
+    func testRestoredSettingsAndBooksAreBroughtBackIntoRange() {
+        storage.files["settings.json"] = #"{"dailyGoalMinutes": 0, "fontSize": 900, "speechRate": -3}"#
+        let library = library()
+        XCTAssertEqual(library.state.settings.dailyGoalMinutes, 5, "a goal of 0 would make every day count")
+        XCTAssertEqual(library.state.settings.fontSize, 34)
+        XCTAssertEqual(library.state.settings.speechRate, 0.3)
+        XCTAssertLessThanOrEqual(library.streak(), maxStreakDays, "the streak always ends")
+        XCTAssertEqual(readingStreak([:], goalSeconds: 0, today: now, calendar: calendar), maxStreakDays)
+    }
+
+    func testRestoredReadingProgressStaysInsideTheBook() throws {
+        let book = library().addBook(title: "T", author: "A", text: "One.\n\nTwo.")
+        let saved = try XCTUnwrap(storage.files["books.json"])
+        storage.files["books.json"] = saved.replacingOccurrences(
+            of: #""progressParagraph"\s*:\s*0"#, with: #""progressParagraph":-7"#, options: .regularExpression
+        )
+        XCTAssertEqual(library().state.books.first { $0.id == book.id }?.progressParagraph, 0)
+    }
+
     func testKeepsACopyOfAFileThatCannotBeRead() {
         storage.files["words.json"] = "not json"
         let library = library()
@@ -73,7 +92,9 @@ final class LibraryTests: XCTestCase {
         XCTAssertGreaterThan(changes, 0)
         XCTAssertTrue(library.isLearning("animals"))
         XCTAssertFalse(library.isLearning("equal"))
-        XCTAssertEqual(library.dueWords().map(\.word), ["animal"])
+        XCTAssertTrue(library.dueWords().isEmpty, "a new word is first reviewed tomorrow")
+        now = ISO8601DateFormatter().date(from: "2026-10-10T04:00:00Z")!
+        XCTAssertEqual(library.dueWords().map(\.word), ["animal"], "due from 04:00 the next day")
 
         library.saveWord("animal", learned: true, translation: " ")
         XCTAssertFalse(library.isLearning("animals"))
@@ -86,6 +107,8 @@ final class LibraryTests: XCTestCase {
     func testReviewAnswersScheduleTheNextReview() {
         let library = library()
         library.saveWord("equal", learned: false)
+        now = now.addingTimeInterval(86_400)
+        XCTAssertEqual(library.dueWords().first?.box, 0)
         library.answerReview("equal", correct: true)
         XCTAssertTrue(library.dueWords().isEmpty)
         now = now.addingTimeInterval(86_400)
@@ -118,7 +141,46 @@ final class LibraryTests: XCTestCase {
         let saved = library.state.word("bay")
         XCTAssertEqual(saved?.learned, false)
         XCTAssertEqual(saved?.box, 0)
-        XCTAssertEqual(library.dueWords().map(\.word), ["bay"])
+        XCTAssertEqual(saved?.nextReview, ISO8601DateFormatter().date(from: "2026-10-10T04:00:00Z"), "back to a first review tomorrow")
+    }
+
+    func testReviewSessionInterleavesBooksAndCountsTomorrow() {
+        let library = library()
+        for word in ["a1", "a2", "a3"] { library.saveWord(word, learned: false, source: "A") }
+        for word in ["b1", "b2"] { library.saveWord(word, learned: false, source: "B") }
+        library.saveWord("known", learned: true, source: "A")
+        XCTAssertEqual(library.dueByEndOfTomorrow(), 5)
+        now = now.addingTimeInterval(86_400)
+        XCTAssertEqual(Set(library.reviewSession().prefix(2).map(\.source)), ["A", "B"], "one book doesn't fill the session")
+        XCTAssertEqual(library.reviewSession().count, 5)
+        XCTAssertEqual(Srs.session(library.dueWords(), limit: 3).count, 3)
+        for word in library.reviewSession() { library.answerReview(word.word, correct: true) }
+        XCTAssertEqual(library.dueByEndOfTomorrow(), 5, "answered words are due again tomorrow")
+    }
+
+    func testSessionHoldsAtMostTwentyWords() {
+        let library = library()
+        for index in 0..<25 { library.saveWord("w\(index)", learned: false) }
+        now = now.addingTimeInterval(86_400)
+        XCTAssertEqual(library.reviewSession().count, Srs.sessionLimit)
+    }
+
+    func testContextTranslationIsKeptWithItsSentence() {
+        let library = library()
+        library.saveWord("sea", learned: false, translationLanguage: "es", context: "By the sea.", contextTranslation: "Junto al mar.")
+        library.saveWord("sea", learned: false, contextTranslation: nil)
+        XCTAssertEqual(library.state.word("sea")?.contextTranslation, "Junto al mar.")
+        library.saveWord("sea", learned: false, context: "The sea is blue.")
+        XCTAssertNil(library.state.word("sea")?.contextTranslation, "a new sentence drops the old translation")
+        XCTAssertEqual(library.contextsNeedingTranslation("es").map(\.word), ["sea"])
+        library.setContextTranslation("sea", "El mar es azul.", language: "es")
+        library.setContextTranslation("sea", " ", language: "es")
+        library.setContextTranslation("missing", "x", language: "es")
+        let sea = self.library().state.word("sea")
+        XCTAssertEqual(sea?.contextTranslation(in: "es"), "El mar es azul.")
+        XCTAssertNil(sea?.contextTranslation(in: "pt"), "another language needs its own translation")
+        XCTAssertTrue(library.contextsNeedingTranslation("es").isEmpty)
+        XCTAssertEqual(library.contextsNeedingTranslation("pt").map(\.word), ["sea"])
     }
 
     func testSaveWordReturnsThePreviousRecordAndRestoreWordPutsItBack() {
@@ -186,6 +248,24 @@ final class LibraryTests: XCTestCase {
         let word = try XCTUnwrap(library().state.word("cat"))
         XCTAssertEqual(word.translation, "gato")
         XCTAssertNil(word.translationLanguage)
+        XCTAssertNil(word.kind)
+        XCTAssertNil(word.base)
+    }
+
+    func testHelperAndModalVerbsAreSavedAsTheirVerbGroup() throws {
+        let library = library()
+        library.saveWord("did not go", learned: false, translation: "no fue", translationLanguage: "es", kind: .helper, base: "do")
+        library.saveWord("doesn't like", learned: false, kind: .helper, base: "do")
+        library.saveWord("Do", learned: true, translation: "hacer", translationLanguage: "es")
+        let reloaded = self.library()
+        let past = try XCTUnwrap(reloaded.state.word("Did not go"))
+        XCTAssertEqual(past.kind, .helper)
+        XCTAssertEqual(past.base, "do")
+        XCTAssertEqual(past.translation, "no fue", "each verb group is its own record")
+        XCTAssertEqual(reloaded.state.word("doesn't like")?.base, "do")
+        XCTAssertNil(reloaded.state.word("do")?.kind, "\"do\" as a word stays separate")
+        XCTAssertEqual(library.wordsNeedingTranslation("es").map(\.word), ["doesn't like"])
+        XCTAssertFalse(library.isLearning("did"), "a verb group doesn't underline the helper everywhere")
     }
 
     func testReadingTimeFeedsTodayAndTheStreak() {
@@ -244,6 +324,42 @@ final class LibraryTests: XCTestCase {
         XCTAssertThrowsError(try library.importText(fileName: "x.txt", text: boilerplateOnly))
         XCTAssertTrue(library.state.books.isEmpty, "nothing is added")
         XCTAssertNil(storage.files["books.json"], "nothing is saved")
+    }
+
+    func testStorageAcceptsOnlyTheAppsOwnFileNames() throws {
+        for name in ["books.json", "book-1760000000000-0.txt", "words.json.corrupt", "seeded"] {
+            XCTAssertTrue(StorageNames.isSafe(name), name)
+        }
+        for name in ["../secret", "a/b", ".hidden", "", "book-..txt", "books.json\n", String(repeating: "a", count: 200)] {
+            XCTAssertFalse(StorageNames.isSafe(name), name)
+        }
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let outside = dir.deletingLastPathComponent().appendingPathComponent("lingleaf-outside.txt")
+        try "outside".write(to: outside, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: outside) }
+        XCTAssertNil(FileStorage(directory: dir).read("../lingleaf-outside.txt"), "a restored book can't name a file outside")
+    }
+
+    func testAHugeContextIsNeverSaved() {
+        let library = library()
+        library.saveWord("sea", learned: false, context: String(repeating: "sea ", count: 5_000),
+                         contextTranslation: String(repeating: "mar ", count: 5_000))
+        let saved = library.state.word("sea")
+        XCTAssertEqual(saved?.context.utf16.count, TextTools.maxSentence)
+        XCTAssertLessThanOrEqual(saved?.contextTranslation?.utf16.count ?? 0, 2 * TextTools.maxSentence)
+    }
+
+    func testAHugeSavedContextIsCutWhenLoaded() {
+        library().saveWord("sea", learned: false, context: String(repeating: "sea ", count: 5_000))
+        XCTAssertEqual(library().state.word("sea")?.context.utf16.count, TextTools.maxSentence)
+    }
+
+    func testLearningWordsFollowTheSavedWords() {
+        let library = library()
+        library.saveWord("sea", learned: false)
+        library.saveWord("boat", learned: true)
+        XCTAssertEqual(library.state.learningWords, ["sea"])
     }
 
     func testFileStorageRoundTrip() throws {

@@ -53,9 +53,15 @@ func readingFont(size: Double) -> Font {
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
+    /// The time "due" is counted at: moves on when the app comes back and when the next word falls due.
+    @State private var now = Date()
 
     var body: some View {
-        let due = model.library.dueWords().count
+        // From the observed state, so the badge follows every review and save.
+        let words = model.state.words
+        let due = words.filter { $0.isDue(now) }.count
+        let nextDue = words.filter { !$0.learned && $0.nextReview > now }.map(\.nextReview).min()
         TabView {
             LibraryView()
                 .tabItem { Label("Library", systemImage: "books.vertical") }
@@ -71,6 +77,16 @@ struct ContentView: View {
         .modifier(TranslationWorker())
         // Words saved offline or before a language was chosen get their translation.
         .task { model.translateMissing() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { now = Date() }
+        }
+        // Sleeps until the next word falls due (a new review day), then counts again.
+        // Keyed on the next due date, so an answer that moves it restarts the wait.
+        .task(id: nextDue) {
+            guard let nextDue else { return }
+            try? await Task.sleep(for: .seconds(max(1, nextDue.timeIntervalSinceNow + 1)))
+            if !Task.isCancelled { now = Date() }
+        }
     }
 }
 
