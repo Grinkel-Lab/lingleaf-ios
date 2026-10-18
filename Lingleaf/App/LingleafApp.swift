@@ -20,6 +20,7 @@ struct LingleafApp: App {
                 #endif
                 // After the overlay, so the probe reads the model from the environment too.
                 .environment(model)
+                .noVoiceAlert(model.speaker)
                 .tint(Brand.ink)
                 .preferredColorScheme(Self.forcedColorScheme)
         }
@@ -56,6 +57,15 @@ final class AppModel {
     /// UI tests only: the last text handed to the fake speaker, shown by `LastSpokenProbe`.
     /// Always nil in live mode. (Not inside `#if`: `@Observable` must see it to track it.)
     private(set) var lastSpoken: String?
+    /// UI tests only: every text handed to the fake speaker, in order, so a test can check a
+    /// sequence (reading aloud moves on every 1.5 s, faster than a test can look at each one).
+    private(set) var spokenLog: [String] = []
+
+    /// UI tests only: what the fake speaker was handed.
+    func recordSpoken(_ text: String) {
+        lastSpoken = text
+        spokenLog.append(text)
+    }
 
     init(
         library: Library, http: HttpFetcher, speaker: Speaker, autoLanguage: String?,
@@ -128,7 +138,7 @@ final class AppModel {
         let speaker = Speaker()
         let library = Library(storage: FileStorage(directory: dir))
         let model = AppModel(library: library, http: http, speaker: speaker, autoLanguage: nil, fakeTranslator: translator, covers: nil)
-        speaker.record = { [weak model] text in model?.lastSpoken = text }
+        speaker.record = { [weak model] text in model?.recordSpoken(text) }
         if let language { library.updateSettings { $0.targetLanguage = language } }
         if due {
             let sentence = "Tom lives in a small house by the sea."
@@ -295,6 +305,12 @@ private struct LastSpokenProbe: View {
                 .opacity(0.01)
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("ui-test-last-spoken")
+            // Everything spoken so far, one text per line.
+            Text(model.spokenLog.joined(separator: "\n"))
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("ui-test-spoken-log")
         }
     }
 }
