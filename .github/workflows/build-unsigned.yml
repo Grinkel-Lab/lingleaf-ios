@@ -1,0 +1,58 @@
+name: Build unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-unsigned.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build unsigned iOS app
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: |
+          xcode=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -z "$xcode" ]; then
+            echo "::error::Xcode 26 not found on this runner"
+            exit 1
+          fi
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build unsigned app for generic iOS device
+        run: |
+          set -o pipefail
+          xcodebuild -project Lingleaf.xcodeproj \
+            -scheme Lingleaf \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Package unsigned IPA
+        run: |
+          APP="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/Lingleaf.app"
+          test -d "$APP" || { echo "::error::Built .app not found"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/Payload/Lingleaf.app"
+          (cd "$RUNNER_TEMP" && zip -qry Lingleaf-unsigned.ipa Payload)
+          mkdir -p output
+          cp "$RUNNER_TEMP/Lingleaf-unsigned.ipa" output/
+          ditto -c -k --sequesterRsrc --keepParent "$APP" output/Lingleaf.app.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lingleaf-unsigned-ios
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
